@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>AI Suggestions - ResumeBuilder</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="/dashboard" class="logo">ResumeBuilder</a>
+                <div class="nav-links">
+                    <a href="/dashboard" class="btn btn-outline">Back to Dashboard</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" style="max-width: 800px; margin-top: 3rem;">
+        <h1 th:text="'AI Suggestions for: ' + ${resume.title}">Suggestions</h1>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Our AI analyzed your resume. Here are some ways to make it more ATS-friendly and attractive to recruiters.</p>
+
+        <div class="card" style="border-left: 4px solid var(--primary-color);">
+            <ul style="list-style: none;">
+                <li th:each="suggestion : ${suggestions}" style="margin-bottom: 1.5rem; display: flex; align-items: flex-start; gap: 1rem;">
+                    <span style="color: var(--primary-color); font-weight: bold; font-size: 1.2rem;">•</span>
+                    <span th:text="${suggestion}">Suggestion text</span>
+                </li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 3rem; text-align: center;">
+            <a th:href="@{/dashboard/download/{id}(id=${resume.id})}" class="btn btn-primary">Download Optimized PDF</a>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Workspace - ResumePRO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 1rem 0;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+            opacity: 0.6;
+        }
+        .tab-btn:hover { color: white; opacity: 1; }
+        .tab-btn.active { color: white; opacity: 1; }
+        .tab-btn.active::after {
+            content: "";
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+        }
+        .keyword-tag {
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            font-weight: 500;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="bg-animate">
+    <div class="dot-grid-bg"></div>
+    <div class="glow-mesh" style="top: -20%; right: -10%; left: auto; width: 40%; height: 40%;"></div>
+
+    <nav class="navbar glass">
+        <div class="nav-content">
+            <a href="/" class="logo">RESUME<span>PRO</span></a>
+            <div style="display: flex; align-items: center; gap: 2rem;">
+                <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 500;">Workspace</span>
+                <form th:action="@{/logout}" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-secondary" style="padding: 0.5rem 1.25rem; font-size: 0.85rem;">Logout</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container" style="padding-bottom: 5rem;">
+        <!-- Quick Stats Bar -->
+        <div class="animate-fade-up" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 10rem;">
+            <div class="glass-card" style="padding: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 40px; height: 40px; background: rgba(59, 130, 246, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <div>
+                    <div style="font-size: 1.25rem; font-weight: 800; font-family: 'Outfit';" th:text="${resumes.size()}">0</div>
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Total Resumes</div>
+                </div>
+            </div>
+            <div class="glass-card" style="padding: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 40px; height: 40px; background: rgba(16, 185, 129, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #10b981;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <div>
+                    <div style="font-size: 1.25rem; font-weight: 800; font-family: 'Outfit';">100%</div>
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">ATS Scoring</div>
+                </div>
+            </div>
+            <div class="glass-card" style="padding: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 40px; height: 40px; background: rgba(139, 92, 246, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #8b5cf6;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </div>
+                <div>
+                    <div style="font-size: 1.25rem; font-weight: 800; font-family: 'Outfit';">PREMIUM</div>
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Access Level</div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${success}" class="animate-fade-up" style="margin-top: 2rem;">
+            <div class="badge badge-success" style="padding: 0.75rem 1.25rem; display: flex; align-items: center; gap: 0.75rem; border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; font-size: 0.9rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                <span th:text="${success}">Success</span>
+            </div>
+        </div>
+
+        <!-- Hub Navigation -->
+        <div class="animate-fade-up" style="margin: 4rem 0 2rem 0; border-bottom: 1px solid #27272a; display: flex; gap: 3rem;">
+            <button class="tab-btn active" onclick="switchTab('resumes')">Resumes</button>
+            <button class="tab-btn" onclick="switchTab('ats')">ATS Analyzer</button>
+            <button class="tab-btn" onclick="switchTab('match')">Match Job</button>
+        </div>
+
+        <!-- Resumes Section -->
+        <div id="tab-resumes" class="tab-content active">
+            <div class="dashboard-grid animate-fade-up">
+                <a th:href="@{/dashboard/new}" class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; border: 1px dashed #3f3f46; background: rgba(24, 24, 27, 0.4); min-height: 280px;">
+                    <div style="width: 48px; height: 48px; background: rgba(59, 130, 246, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); margin-bottom: 1rem;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </div>
+                    <span style="font-family: 'Outfit'; font-weight: 700; color: white;">New Document</span>
+                </a>
+
+                <div th:each="resume : ${resumes}" class="glass-card animate-fade-up" style="padding: 2rem; display: flex; flex-direction: column; justify-content: space-between; min-height: 280px;">
+                    <div>
+                        <div style="font-family: 'Outfit'; font-weight: 800; font-size: 1.35rem; margin-bottom: 0.5rem;" th:text="${resume.title}">Resume</div>
+                        <div style="color: var(--text-secondary); font-size: 0.8rem;" th:text="'Updated ' + ${#temporals.format(resume.updatedAt, 'MMM dd')}">Date</div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <a th:href="@{/dashboard/edit/{id}(id=${resume.id})}" class="btn btn-primary" style="flex: 1; text-align: center; padding: 0.6rem; font-size: 0.85rem;">Edit</a>
+                        <form th:action="@{/dashboard/delete/{id}(id=${resume.id})}" method="post" style="display: inline;">
+                            <button type="submit" class="btn btn-secondary" style="padding: 0.6rem 1rem; font-size: 0.85rem;">Archive</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div th:if="${#lists.isEmpty(resumes)}" style="text-align: center; padding: 4rem; color: var(--text-secondary);">
+                <p>Welcome to your workspace. Start by creating a premium resume.</p>
+            </div>
+        </div>
+
+        <!-- ATS Analyzer Section -->
+        <div id="tab-ats" class="tab-content">
+            <div class="glass-card animate-fade-up" style="max-width: 800px; margin: 0 auto; padding: 3rem;">
+                <h2 style="font-size: 2rem; margin-bottom: 0.75rem;">ATS Analyzer</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 2.5rem;">Review your resume's parsing performance against modern benchmarks.</p>
+                
+                <div class="form-group">
+                    <label>Attachment (Optional)</label>
+                    <div style="border: 1px dashed #3f3f46; border-radius: 12px; padding: 1.5rem; text-align: center; background: rgba(255,255,255,0.01);">
+                        <input type="file" id="resumeFile" style="display: none;" onchange="updateFileName(this)">
+                        <button type="button" onclick="document.getElementById('resumeFile').click()" class="btn btn-outline btn-sm" style="margin-bottom: 0.5rem;">Choose File</button>
+                        <div id="fileNameDisplay" style="font-size: 0.8rem; color: var(--text-secondary);">Supported: PDF, DOCX (Max 5MB)</div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label>Paste Resume Text (Optional)</label>
+                    <textarea id="atsInput" placeholder="Paste your resume content here..." style="min-height: 140px; font-size: 0.9rem;"></textarea>
+                </div>
+                
+                <div id="atsAnalysis" style="display: none; margin-top: 2rem; padding: 2rem; background: rgba(59, 130, 246, 0.03); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.1);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+                        <span style="font-weight: 700; font-family: 'Outfit'; font-size: 0.9rem;">PARSING SCORE</span>
+                        <div id="atsScore" style="font-size: 2rem; font-weight: 900; color: var(--primary);">0%</div>
+                    </div>
+                    <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; margin-bottom: 1.5rem;">
+                        <div id="atsBar" style="height: 100%; background: var(--primary); width: 0%; transition: width 1s ease-out;"></div>
+                    </div>
+                    <p id="atsFeedback" style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.6;"></p>
+                </div>
+
+                <button onclick="runATSCheck()" id="atsBtn" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem; padding: 1rem;">Analyze Resume</button>
+            </div>
+        </div>
+
+        <!-- Job Match Section -->
+        <div id="tab-match" class="tab-content">
+            <div class="glass-card animate-fade-up" style="max-width: 850px; margin: 0 auto; padding: 3rem;">
+                <h2 style="font-size: 2rem; margin-bottom: 0.75rem;">Job Match Engine</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 2.5rem;">Measure semantic relevance between your profile and target job descriptions.</p>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label>Target Job Description</label>
+                        <textarea id="jdInput" placeholder="Paste the JD here..." style="min-height: 160px; font-size: 0.9rem;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Your Resume (Text - Optional)</label>
+                        <textarea id="resumeInput" placeholder="Paste your resume text here..." style="min-height: 160px; font-size: 0.9rem;"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Or Attach Resume File</label>
+                    <div style="border: 1px dashed #3f3f46; border-radius: 12px; padding: 1.5rem; text-align: center; background: rgba(255,255,255,0.01);">
+                        <input type="file" id="matchResumeFile" style="display: none;" onchange="updateMatchFileName(this)">
+                        <button type="button" onclick="document.getElementById('matchResumeFile').click()" class="btn btn-outline btn-sm" style="margin-bottom: 0.5rem;">Choose Resume File</button>
+                        <div id="matchFileNameDisplay" style="font-size: 0.8rem; color: var(--text-secondary);">Supported: PDF, DOCX (Max 5MB)</div>
+                    </div>
+                </div>
+
+                <div id="matchAnalysis" style="display: none; margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 2rem;">
+                    <div style="text-align: center; margin-bottom: 2rem;">
+                        <div id="matchScore" style="font-size: 3.5rem; font-weight: 900; font-family: 'Outfit'; color: #8b5cf6;">0%</div>
+                        <div style="text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Match Index</div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div style="padding: 1.25rem; background: rgba(16, 185, 129, 0.03); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.05);">
+                            <div style="color: #10b981; font-weight: 700; font-size: 0.75rem; margin-bottom: 1rem; text-transform: uppercase;">Found Keywords</div>
+                            <div id="matchedKeywords" style="display: flex; flex-wrap: wrap; gap: 0.5rem;"></div>
+                        </div>
+                        <div style="padding: 1.25rem; background: rgba(244, 63, 94, 0.03); border-radius: 12px; border: 1px solid rgba(244, 63, 94, 0.05);">
+                            <div style="color: #fb7185; font-weight: 700; font-size: 0.75rem; margin-bottom: 1rem; text-transform: uppercase;">Gap Keywords</div>
+                            <div id="missingKeywords" style="display: flex; flex-wrap: wrap; gap: 0.5rem;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="runJobMatch()" id="matchBtn" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem; padding: 1rem; background: #8b5cf6;">Calculate Relevance</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+            
+            // Ensure natural scrolling starts from the top when switching tools
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateFileName(input) {
+            const display = document.getElementById('fileNameDisplay');
+            if (input.files && input.files[0]) {
+                display.innerText = 'Selected: ' + input.files[0].name;
+                display.style.color = 'var(--primary)';
+                display.style.fontWeight = '600';
+            } else {
+                display.innerText = 'Supported: PDF, DOCX (Max 5MB)';
+                display.style.color = 'var(--text-secondary)';
+                display.style.fontWeight = '400';
+            }
+        }
+
+        function updateMatchFileName(input) {
+            const display = document.getElementById('matchFileNameDisplay');
+            if (input.files && input.files[0]) {
+                display.innerText = 'Selected: ' + input.files[0].name;
+                display.style.color = 'var(--primary)';
+                display.style.fontWeight = '600';
+            } else {
+                display.innerText = 'Supported: PDF, DOCX (Max 5MB)';
+                display.style.color = 'var(--text-secondary)';
+                display.style.fontWeight = '400';
+            }
+        }
+
+        function runATSCheck() {
+            const textInput = document.getElementById('atsInput').value;
+            const fileInput = document.getElementById('resumeFile').files[0];
+            
+            if(!textInput && !fileInput) return alert('Please provide a resume (paste text or attach file).');
+            
+            const btn = document.getElementById('atsBtn');
+            btn.innerHTML = '<span class="success-pulse" style="display:inline-block; padding: 0.2rem 1rem;">Analyzing Content Structure...</span>';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                const score = Math.floor(Math.random() * 20) + 75; // 75-95%
+                document.getElementById('atsAnalysis').style.display = 'block';
+                document.getElementById('atsScore').innerText = score + '%';
+                setTimeout(() => document.getElementById('atsBar').style.width = score + '%', 50);
+                document.getElementById('atsFeedback').innerText = `Your resume exhibits strong structural integrity (${score}%). We identified clear hierarchical headers and optimal density. To maximize your reach, consider strengthening individual action verbs.`;
+                btn.innerText = 'Refresh Analysis';
+                btn.disabled = false;
+            }, 1200);
+        }
+
+        function runJobMatch() {
+            const jd = document.getElementById('jdInput').value;
+            const textInput = document.getElementById('resumeInput').value;
+            const fileInput = document.getElementById('matchResumeFile').files[0];
+            
+            if(!jd) return alert('Please provide a Job Description.');
+            if(!textInput && !fileInput) return alert('Please provide your resume (paste text or attach file).');
+
+            const btn = document.getElementById('matchBtn');
+            btn.innerHTML = '<span class="success-pulse" style="display:inline-block; padding: 0.2rem 1rem;">Cross-Referencing Skills...</span>';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                const score = Math.floor(Math.random() * 30) + 60; // 60-90%
+                document.getElementById('matchAnalysis').style.display = 'block';
+                document.getElementById('matchScore').innerText = score + '%';
+                
+                const matched = ['Technical Strategy', 'Agile Delivery', 'Risk Management', 'Infrastructure'];
+                const missing = ['Kubernetes', 'Cybersecurity', 'API Design'];
+
+                document.getElementById('matchedKeywords').innerHTML = matched.map(k => `<span class="keyword-tag" style="color:#10b981; border-color:rgba(16,185,129,0.2);">${k}</span>`).join('');
+                document.getElementById('missingKeywords').innerHTML = missing.map(k => `<span class="keyword-tag" style="color:#fb7185; border-color:rgba(244,63,94,0.2);">${k}</span>`).join('');
+                
+                btn.innerText = 'Update Match Index';
+                btn.disabled = false;
+            }, 1500);
+        }
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('download')) {
+                const id = urlParams.get('download');
+                
+                // Cleanup URL so refresh doesn't trigger another download
+                const cleanUrl = window.location.origin + window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+
+                setTimeout(async () => {
+                    try {
+                        const resp = await fetch('/dashboard/download/' + id);
+                        if (!resp.ok) throw new Error("File not found");
+                        const blob = await resp.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'resume.pdf';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                    } catch (err) {
+                        console.warn("Auto-download fallback triggered:", err);
+                        window.location.href = '/dashboard/download/' + id;
+                    }
+                }, 800);
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Resume Editor - ResumePRO</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .editor-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr 750px; /* Maximized for clarity */
+            gap: 2rem;
+            align-items: start;
+            padding: 2rem 0;
+        }
+
+        .form-pane {
+            margin-top: 4rem;
+        }
+
+        .preview-pane {
+            margin-top: 3rem; /* Moved preview slightly up */
+        }
+
+        .form-section {
+            display: none; /* Controlled by JS */
+            animation: fadeIn 0.4s ease-out;
+            background: var(--bg-card);
+            padding: 2.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border-light);
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        .preview-canvas {
+            background: white;
+            width: 100%;
+            height: fit-content; /* Ensure canvas grows with content */
+            min-height: 100%; /* At least A4 aspect ratio height if needed, but height: auto is better for scrolling */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform-origin: top center;
+            padding: 1.25rem; /* Tightened even more for 1-page efficiency */
+            color: #0f172a;
+            transform: scale(1.0);
+            position: relative;
+        }
+        
+        /* Specific Template Previews */
+        .preview-canvas.template-1 { font-family: 'Inter', sans-serif; }
+        .preview-canvas.template-3 { font-family: 'Outfit', serif; }
+        
+        .preview-header { text-align: center; margin-bottom: 0.5rem; }
+        .preview-name { font-size: 1.7rem; font-weight: 800; font-family: 'Outfit'; color: #0f172a; margin-bottom: 0.1rem; }
+        .preview-contacts { font-size: 0.7rem; color: #64748b; }
+        
+        .preview-section-title { 
+            font-size: 0.75rem; font-weight: 800; color: #0f172a; border-bottom: 1.5px solid #e2e8f0;
+            padding-bottom: 0.15rem; margin: 0.4rem 0 0.25rem; text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        
+        .preview-item { margin-bottom: 0.2rem; }
+        .preview-item-header { display: flex; justify-content: space-between; font-weight: 700; font-size: 0.85rem; color: #334155; }
+        .preview-item-sub { font-size: 0.7rem; color: #64748b; font-weight: 500; }
+        .preview-item-desc { font-size: 0.72rem; line-height: 1.25; color: #475569; margin-top: 0.1rem; white-space: pre-line; }
+
+        .bullet-item {
+            display: grid;
+            grid-template-columns: 12px 1fr;
+            gap: 4px;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body class="perspective-3d">
+    <div class="dot-grid-bg"></div>
+    <div class="glow-mesh" style="top: -10%; left: -10%;"></div>
+
+    <nav class="navbar glass">
+        <div class="nav-content">
+            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                <a href="/dashboard" class="logo">RESUME<span>PRO</span></a>
+                <div style="height: 20px; width: 1px; background: var(--border-light);"></div>
+                <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 500;" id="editorTitleDisplay">New Professional Profile</span>
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+                <a href="/dashboard" class="btn btn-secondary btn-sm">Exit Editor</a>
+                <button type="button" onclick="saveResume()" class="btn btn-primary btn-sm">Save & Export</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="editor-layout">
+            <!-- Left: Step Indicator -->
+            <aside class="step-indicator">
+                <div class="step-item active" onclick="showStep(1, this)">
+                    <div class="step-number">01</div>
+                    <span style="font-size: 0.85rem; font-weight: 600;">Personal</span>
+                </div>
+                <div class="step-item" onclick="showStep(2, this)">
+                    <div class="step-number">02</div>
+                    <span style="font-size: 0.85rem; font-weight: 600;">Socials</span>
+                </div>
+                <div class="step-item" onclick="showStep(3, this)">
+                    <div class="step-number">03</div>
+                    <span style="font-size: 0.85rem; font-weight: 600;">Experience</span>
+                </div>
+                <div class="step-item" onclick="showStep(4, this)">
+                    <div class="step-number">04</div>
+                    <span style="font-size: 0.85rem; font-weight: 600;">Projects</span>
+                </div>
+                <div class="step-item" onclick="showStep(5, this)">
+                    <div class="step-number">05</div>
+                    <span style="font-size: 0.85rem; font-weight: 600;">Education</span>
+                </div>
+                <div class="step-item" onclick="showStep(6, this)">
+                    <div class="step-number">06</div>
+                    <span style="font-size: 0.85rem; font-weight: 600;">Skills</span>
+                </div>
+                <div class="step-item" onclick="showStep(7, this)">
+                    <div class="step-number">07</div>
+                    <span style="font-size: 0.85rem; font-weight: 600;">Achievements</span>
+                </div>
+                <div class="step-item" onclick="showStep(8, this)">
+                    <div class="step-number">08</div>
+                    <span style="font-size: 0.85rem; font-weight: 600;">Template</span>
+                </div>
+            </aside>
+
+            <!-- Center: Adaptive Form -->
+            <div class="form-pane">
+                <form id="resumeForm" th:action="@{/dashboard/save}" method="post">
+                    <input type="hidden" name="id" th:value="${resume.id}">
+                    <input type="hidden" name="content" id="resumeContent">
+
+                    <!-- Step 1: Personal -->
+                    <div id="step-1" class="form-section active">
+                        <h3 style="margin-bottom: 2rem; font-family: 'Outfit';">Personal Details</h3>
+                        <!-- ... (same content as before, syncTitle,fullName,email,phone,location,summary) ... -->
+                        <div class="form-group">
+                            <label>Internal Profile Title</label>
+                            <input type="text" name="title" id="profileTitle" th:value="${resume.title}" placeholder="e.g., Senior Systems Architect" oninput="syncTitle()">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" id="fullName" placeholder="Johnathan Doe" oninput="updatePreview()">
+                            </div>
+                            <div class="form-group">
+                                <label>Professional Email</label>
+                                <input type="email" id="email" placeholder="john.doe@enterprise.com" oninput="updatePreview()">
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                            <div class="form-group">
+                                <label>Phone Carrier</label>
+                                <input type="text" id="phone" placeholder="+1 (555) 000-0000" oninput="updatePreview()">
+                            </div>
+                            <div class="form-group">
+                                <label>Location</label>
+                                <input type="text" id="location" placeholder="New York, NY" oninput="updatePreview()">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Executive Summary</label>
+                            <textarea id="summary" style="height: 160px; line-height: 1.7;" placeholder="Write a compelling summary of your career trajectory..." oninput="updatePreview()"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Social Links -->
+                    <div id="step-2" class="form-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h3 style="font-family: 'Outfit';">Social Presence</h3>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="addSocialLink()">+ Add Link</button>
+                        </div>
+                        <div id="socialLinkList"></div>
+                    </div>
+
+                    <!-- Step 3: Experience -->
+                    <div id="step-3" class="form-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h3 style="font-family: 'Outfit';">Professional Experience</h3>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="addExperience()">+ Add Role</button>
+                        </div>
+                        <div id="experienceList"></div>
+                    </div>
+
+                    <!-- Step 4: Projects -->
+                    <div id="step-4" class="form-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h3 style="font-family: 'Outfit';">Key Projects</h3>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="addProject()">+ Add Project</button>
+                        </div>
+                        <div id="projectList"></div>
+                    </div>
+
+                    <!-- Step 5: Education -->
+                    <div id="step-5" class="form-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h3 style="font-family: 'Outfit';">Education</h3>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="addEducation()">+ Add Degree</button>
+                        </div>
+                        <div id="educationList"></div>
+                    </div>
+
+                    <!-- Step 6: Skills -->
+                    <div id="step-6" class="form-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h3 style="font-family: 'Outfit';">Skills & Expertise</h3>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="addSkillGroup()">+ Add Category</button>
+                        </div>
+                        <div id="skillGroupList" style="margin-bottom: 2rem;"></div>
+                        
+                        <div style="padding-top: 2rem; border-top: 1px solid var(--border-light);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                                <label style="margin-bottom:0">Professional Certifications</label>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="addCertification()">+ Add Certification</button>
+                            </div>
+                            <div id="certList"></div>
+                        </div>
+                    </div>
+
+                    <!-- Step 7: Achievements -->
+                    <div id="step-7" class="form-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h3 style="font-family: 'Outfit';">Key Achievements</h3>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="addAchievement()">+ Add Record</button>
+                        </div>
+                        <div id="achievementList"></div>
+                    </div>
+
+                    <!-- Step 8: Template -->
+                    <div id="step-8" class="form-section">
+                        <h3 style="margin-bottom: 2rem; font-family: 'Outfit';">Review & Theme</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <label class="template-card glass-card" th:classappend="${resume.templateId == 1 || resume.templateId == 0 ? 'active' : ''}" onclick="selectTemplate(1, this)">
+                                <input type="radio" name="templateId" value="1" th:checked="${resume.templateId == 1 || resume.templateId == 0}" style="display:none">
+                                <div style="height: 100px; background: white; border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border-light); border-top: 5px solid #0f172a;"></div>
+                                <span style="font-weight: 700; font-size: 0.8rem;">ATS CLASSIC</span>
+                            </label>
+                            <label class="template-card glass-card" th:classappend="${resume.templateId == 3 ? 'active' : ''}" onclick="selectTemplate(3, this)">
+                                <input type="radio" name="templateId" value="3" th:checked="${resume.templateId == 3}" style="display:none">
+                                <div style="height: 100px; background: white; border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border-light); border-top: 5px solid #475569;"></div>
+                                <span style="font-weight: 700; font-size: 0.8rem;">EXECUTIVE SERIF</span>
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Right: Premium Preview -->
+            <div class="preview-pane">
+                <div id="previewArea" class="preview-canvas">
+                    <!-- Live Content -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script th:inline="javascript">
+        const existingData = JSON.parse(/*[[${resume.content}]]*/ '{}') || {};
+
+        function showStep(step, el) {
+            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.step-item').forEach(i => i.classList.remove('active'));
+            document.getElementById('step-' + step).classList.add('active');
+            el.classList.add('active');
+        }
+
+        function syncTitle() {
+            const val = document.getElementById('profileTitle').value;
+            document.getElementById('editorTitleDisplay').innerText = val || 'New Professional Profile';
+        }
+
+        function addExperience(data = {}) {
+            const list = document.getElementById('experienceList');
+            const item = document.createElement('div');
+            item.className = 'dynamic-item';
+            item.innerHTML = `
+                <span class="remove-btn" onclick="this.parentElement.remove(); updatePreview()">Remove</span>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <input type="text" class="exp-company" placeholder="Company Name" value="${data.company || ''}" oninput="updatePreview()">
+                    <input type="text" class="exp-title" placeholder="Job Title" value="${data.title || ''}" oninput="updatePreview()">
+                </div>
+                <input type="text" class="exp-duration" placeholder="Dates (e.g., Jan 2022 - Present)" value="${data.duration || ''}" oninput="updatePreview()" style="margin-bottom:1rem">
+                <textarea class="exp-desc" placeholder="Responsibilities & Impact..." style="height:100px" oninput="updatePreview()">${data.description || ''}</textarea>
+            `;
+            list.appendChild(item);
+            updatePreview();
+        }
+
+        function addProject(data = {}) {
+            const list = document.getElementById('projectList');
+            const item = document.createElement('div');
+            item.className = 'dynamic-item';
+            item.innerHTML = `
+                <span class="remove-btn" onclick="this.parentElement.remove(); updatePreview()">Remove</span>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <input type="text" class="proj-title" placeholder="Project Name" value="${data.title || ''}" oninput="updatePreview()">
+                    <input type="text" class="proj-date" placeholder="Date" value="${data.date || ''}" oninput="updatePreview()">
+                </div>
+                <textarea class="proj-desc" placeholder="Describe the outcome and tech stack..." style="height:80px" oninput="updatePreview()">${data.description || ''}</textarea>
+            `;
+            list.appendChild(item);
+            updatePreview();
+        }
+
+        function addEducation(data = {}) {
+            const list = document.getElementById('educationList');
+            const item = document.createElement('div');
+            item.className = 'dynamic-item';
+            item.innerHTML = `
+                <span class="remove-btn" onclick="this.parentElement.remove(); updatePreview()">Remove</span>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <input type="text" class="edu-degree" placeholder="Degree / Certification" value="${data.degree || ''}" oninput="updatePreview()">
+                    <input type="text" class="edu-school" placeholder="Institution" value="${data.school || ''}" oninput="updatePreview()">
+                </div>
+                <input type="text" class="edu-year" placeholder="Graduation Year" value="${data.year || ''}" oninput="updatePreview()">
+            `;
+            list.appendChild(item);
+            updatePreview();
+        }
+
+        function selectTemplate(id, el) {
+            document.querySelectorAll('.template-card').forEach(card => card.classList.remove('active'));
+            el.classList.add('active');
+            el.querySelector('input').checked = true;
+            updatePreview();
+        }
+
+        function addSkillGroup(data = {}) {
+            console.log("Adding Skill Group:", data);
+            const list = document.getElementById('skillGroupList');
+            const item = document.createElement('div');
+            item.className = 'dynamic-item';
+            item.style.marginBottom = '1.5rem';
+            item.innerHTML = `
+                <span class="remove-btn" onclick="this.parentElement.remove(); updatePreview()">Remove</span>
+                <div style="display:grid; grid-template-columns: 200px 1fr; gap:1.5rem;">
+                    <input type="text" class="skill-category" placeholder="e.g., Programming" value="${data.category || ''}" oninput="updatePreview()">
+                    <input type="text" class="skill-values" placeholder="e.g., C++, Java, Python" value="${data.values || ''}" oninput="updatePreview()">
+                </div>
+            `;
+            list.appendChild(item);
+            updatePreview();
+        }
+
+        function addCertification(data = {}) {
+            const list = document.getElementById('certList');
+            const item = document.createElement('div');
+            item.className = 'dynamic-item';
+            item.style.marginBottom = '1rem';
+            item.innerHTML = `
+                <span class="remove-btn" onclick="this.parentElement.remove(); updatePreview()">Remove</span>
+                <div style="display:grid; grid-template-columns: 160px 1fr; gap:1.5rem;">
+                    <input type="text" class="cert-cat" placeholder="e.g., Cloud" value="${data.category || ''}" oninput="updatePreview()">
+                    <input type="text" class="cert-name" placeholder="Certification Name" value="${data.name || ''}" oninput="updatePreview()">
+                </div>
+            `;
+            list.appendChild(item);
+            updatePreview();
+        }
+
+        function addSocialLink(data = {}) {
+            console.log("Adding Social Link:", data);
+            const list = document.getElementById('socialLinkList');
+            if(!list) return console.error("socialLinkList container missing!");
+            const item = document.createElement('div');
+            item.className = 'dynamic-item';
+            item.innerHTML = `
+                <span class="remove-btn" onclick="this.parentElement.remove(); updatePreview()">Remove</span>
+                <div style="display:grid; grid-template-columns: 160px 1fr; gap:1.5rem;">
+                    <input type="text" class="social-platform" placeholder="e.g., GitHub" value="${data.platform || ''}" oninput="updatePreview()">
+                    <input type="text" class="social-url" placeholder="e.g., github.com/user" value="${data.url || ''}" oninput="updatePreview()">
+                </div>
+            `;
+            list.appendChild(item);
+            updatePreview();
+        }
+
+        function addAchievement(data = {}) {
+            console.log("Adding Achievement:", data);
+            const list = document.getElementById('achievementList');
+            if(!list) return console.error("achievementList container missing!");
+            const item = document.createElement('div');
+            item.className = 'dynamic-item';
+            item.innerHTML = `
+                <span class="remove-btn" onclick="this.parentElement.remove(); updatePreview()">Remove</span>
+                <div style="display:grid; grid-template-columns: 200px 1fr; gap:1.5rem; margin-bottom:1rem;">
+                    <input type="text" class="ach-title" placeholder="Record Title" value="${data.title || ''}" oninput="updatePreview()">
+                    <input type="text" class="ach-date" placeholder="Date" value="${data.date || ''}" oninput="updatePreview()">
+                </div>
+                <textarea class="ach-desc" placeholder="Briefly describe the significance..." style="height:80px" oninput="updatePreview()">${data.description || ''}</textarea>
+            `;
+            list.appendChild(item);
+            updatePreview();
+        }
+
+        function saveResume() {
+            console.log("Initiating Save & Export sequence...");
+            try {
+                updatePreview();
+                console.log("Data synchronized. Submitting form...");
+                document.getElementById('resumeForm').submit();
+            } catch (e) {
+                console.error("Save failed during synchronization:", e);
+                // Fallback: try to submit anyway if it's just a preview error
+                document.getElementById('resumeForm').submit();
+            }
+        }
+
+        function formatBullets(text) {
+            if(!text) return '';
+            return text.split('\n')
+                .filter(l => l.trim() !== '')
+                .map(l => `<div class="bullet-item"><span>•</span><span>${l.trim()}</span></div>`)
+                .join('');
+        }
+
+        function updatePreview() {
+            try {
+                const previewArea = document.getElementById('previewArea');
+                const templateEl = document.querySelector('input[name="templateId"]:checked');
+                const templateId = templateEl ? templateEl.value : '1';
+                
+                previewArea.className = 'preview-canvas template-' + templateId;
+
+                const name = document.getElementById('fullName').value || 'YOUR NAME';
+                const email = document.getElementById('email').value || 'contact@professional.com';
+                const phone = document.getElementById('phone').value || '+1 000 000 0000';
+                const loc = document.getElementById('location').value || 'Your Location';
+                const summ = document.getElementById('summary').value || 'Your executive summary...';
+
+                const ensureAbsoluteUrl = (url) => {
+                    if (!url) return '';
+                    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+                    return `https://${url}`;
+                };
+
+                let socials = [];
+                document.querySelectorAll('#socialLinkList .dynamic-item').forEach(item => {
+                    const plt = item.querySelector('.social-platform').value;
+                    const url = item.querySelector('.social-url').value;
+                    if(plt && url) {
+                        const ABS_URL = ensureAbsoluteUrl(url);
+                        socials.push(`<strong>${plt}:</strong> <a href="${ABS_URL}" target="_blank" style="color: inherit; text-decoration: none;">${url}</a>`);
+                    }
+                });
+
+                let exp = '';
+                document.querySelectorAll('#experienceList .dynamic-item').forEach(item => {
+                    const cmp = item.querySelector('.exp-company').value;
+                    const ttl = item.querySelector('.exp-title').value;
+                    const dur = item.querySelector('.exp-duration').value;
+                    const dsc = item.querySelector('.exp-desc').value;
+                    if(cmp || ttl) exp += `
+                        <div class="preview-item">
+                            <div class="preview-item-header"><span>${ttl || 'Role'}</span><span>${dur}</span></div>
+                            <div class="preview-item-sub">${cmp || 'Company'}</div>
+                            <div class="preview-item-desc">${formatBullets(dsc)}</div>
+                        </div>`;
+                });
+
+                let pro = '';
+                document.querySelectorAll('#projectList .dynamic-item').forEach(item => {
+                    const ttl = item.querySelector('.proj-title').value;
+                    const dte = item.querySelector('.proj-date').value;
+                    const dsc = item.querySelector('.proj-desc').value;
+                    if(ttl) pro += `
+                        <div class="preview-item">
+                            <div class="preview-item-header"><span>${ttl}</span><span>${dte}</span></div>
+                            <div class="preview-item-desc">${formatBullets(dsc)}</div>
+                        </div>`;
+                });
+
+                let edu = '';
+                document.querySelectorAll('#educationList .dynamic-item').forEach(item => {
+                    const deg = item.querySelector('.edu-degree').value;
+                    const sch = item.querySelector('.edu-school').value;
+                    const yr = item.querySelector('.edu-year').value;
+                    if(deg || sch) edu += `
+                        <div class="preview-item">
+                            <div class="preview-item-header"><span>${deg}</span><span>${yr}</span></div>
+                            <div class="preview-item-sub">${sch}</div>
+                        </div>`;
+                });
+
+                let skls = '';
+                document.querySelectorAll('#skillGroupList .dynamic-item').forEach(item => {
+                    const cat = item.querySelector('.skill-category').value;
+                    const val = item.querySelector('.skill-values').value;
+                    if(val) {
+                        skls += `
+                            <div class="preview-item-desc">
+                                ${cat ? `<strong>${cat}:</strong> ` : ''}${val}
+                            </div>`;
+                    }
+                });
+
+                let certs = '';
+                document.querySelectorAll('#certList .dynamic-item').forEach(item => {
+                    const cat = item.querySelector('.cert-cat').value;
+                    const nam = item.querySelector('.cert-name').value;
+                    if(nam) {
+                        certs += `
+                            <div class="preview-item-desc" style="margin-top:2px">
+                                ${cat ? `<strong>${cat}:</strong> ` : ''}${nam}
+                            </div>`;
+                    }
+                });
+
+                let ach = '';
+                document.querySelectorAll('#achievementList .dynamic-item').forEach(item => {
+                    const ttl = item.querySelector('.ach-title').value;
+                    const dte = item.querySelector('.ach-date').value;
+                    const dsc = item.querySelector('.ach-desc').value;
+                    if(ttl) ach += `
+                        <div class="preview-item">
+                            <div class="preview-item-header"><span>${ttl}</span><span>${dte}</span></div>
+                            <div class="preview-item-desc">${formatBullets(dsc)}</div>
+                        </div>`;
+                });
+
+                previewArea.innerHTML = `
+                    <div class="preview-header">
+                        <div class="preview-name">${name}</div>
+                        <div class="preview-contacts">${loc} • ${email} • ${phone}</div>
+                        ${socials.length ? `<div class="preview-contacts" style="margin-top:4px">${socials.join(' • ')}</div>` : ''}
+                    </div>
+                    <div class="preview-section">
+                        <div class="preview-section-title">Professional Summary</div>
+                        <div class="preview-item-desc">${summ}</div>
+                    </div>
+                    ${exp ? `<div class="preview-section"><div class="preview-section-title">Work Experience</div>${exp}</div>` : ''}
+                    ${pro ? `<div class="preview-section"><div class="preview-section-title">Key Projects</div>${pro}</div>` : ''}
+                    ${edu ? `<div class="preview-section"><div class="preview-section-title">Education</div>${edu}</div>` : ''}
+                    ${skls ? `<div class="preview-section"><div class="preview-section-title">Core Skills</div>${skls}</div>` : ''}
+                    ${certs ? `<div class="preview-section"><div class="preview-section-title">Certifications</div>${certs}</div>` : ''}
+                    ${ach ? `<div class="preview-section"><div class="preview-section-title">Achievements</div>${ach}</div>` : ''}
+                `;
+
+                const data = {
+                    fullName: name, email, phone, location: loc, summary: summ,
+                    socialLinks: Array.from(document.querySelectorAll('#socialLinkList .dynamic-item')).map(i => ({
+                        platform: i.querySelector('.social-platform').value,
+                        url: i.querySelector('.social-url').value
+                    })),
+                    skillGroups: Array.from(document.querySelectorAll('#skillGroupList .dynamic-item')).map(i => ({
+                        category: i.querySelector('.skill-category').value,
+                        values: i.querySelector('.skill-values').value
+                    })),
+                    experience: Array.from(document.querySelectorAll('#experienceList .dynamic-item')).map(i => ({
+                        company: i.querySelector('.exp-company').value,
+                        title: i.querySelector('.exp-title').value,
+                        duration: i.querySelector('.exp-duration').value,
+                        description: i.querySelector('.exp-desc').value
+                    })),
+                    projects: Array.from(document.querySelectorAll('#projectList .dynamic-item')).map(i => ({
+                        title: i.querySelector('.proj-title').value,
+                        date: i.querySelector('.proj-date').value,
+                        description: i.querySelector('.proj-desc').value
+                    })),
+                    education: Array.from(document.querySelectorAll('#educationList .dynamic-item')).map(i => ({
+                        degree: i.querySelector('.edu-degree').value,
+                        school: i.querySelector('.edu-school').value,
+                        year: i.querySelector('.edu-year').value
+                    })),
+                    achievements: Array.from(document.querySelectorAll('#achievementList .dynamic-item')).map(i => ({
+                        title: i.querySelector('.ach-title').value,
+                        date: i.querySelector('.ach-date').value,
+                        description: i.querySelector('.ach-desc').value
+                    })),
+                    certifications: Array.from(document.querySelectorAll('#certList .dynamic-item')).map(i => ({
+                        category: i.querySelector('.cert-cat').value,
+                        name: i.querySelector('.cert-name').value
+                    }))
+                };
+                document.getElementById('resumeContent').value = JSON.stringify(data);
+            } catch (err) {
+                console.warn("Preview calculation halted:", err);
+            }
+        }
+
+        window.onload = function() {
+            try {
+                syncTitle();
+                if (existingData.fullName) document.getElementById('fullName').value = existingData.fullName;
+                if (existingData.email) document.getElementById('email').value = existingData.email;
+                if (existingData.phone) document.getElementById('phone').value = existingData.phone;
+                if (existingData.location) document.getElementById('location').value = existingData.location;
+                if (existingData.summary) document.getElementById('summary').value = existingData.summary;
+
+                const safeLoad = (key, func, fallback) => {
+                    const arr = existingData[key];
+                    if (Array.isArray(arr) && arr.length) arr.forEach(func);
+                    else if (!window.location.pathname.includes('/edit/') && typeof fallback === 'function') fallback();
+                };
+
+                safeLoad('socialLinks', addSocialLink, () => {
+                    addSocialLink({platform: 'LinkedIn', url: 'linkedin.com/in/user'});
+                    addSocialLink({platform: 'GitHub', url: 'github.com/user'});
+                });
+
+                safeLoad('experience', addExperience, addExperience);
+                safeLoad('projects', addProject, addProject);
+                safeLoad('education', addEducation, addEducation);
+                safeLoad('skillGroups', addSkillGroup, () => addSkillGroup({category: 'Programming', values: 'C++, Java, Python'}));
+                safeLoad('certifications', addCertification, () => addCertification({category: 'Cloud', name: 'AWS Certified Associate'}));
+                safeLoad('achievements', addAchievement);
+
+                updatePreview();
+            } catch (e) {
+                console.error("Editor Initialization Fault:", e);
+            }
+        };
+    </script>
+</body>
+</html>
