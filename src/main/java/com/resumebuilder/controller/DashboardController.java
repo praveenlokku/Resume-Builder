@@ -47,11 +47,37 @@ public class DashboardController {
     }
 
     @GetMapping("/create")
-    public String createResumeForm(@RequestParam(defaultValue = "1") int templateId, Model model) {
+    public String createResumeForm(@RequestParam(required = false) Integer templateId, Authentication authentication, Model model) {
+        String username = authentication.getName();
+        Optional<User> userOpt = userService.findByUsername(username);
+        
         Resume resume = new Resume();
         resume.setTitle("");
-        resume.setContent("{}");
-        resume.setTemplateId(templateId);
+        
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            // Auto-fill from settings
+            int tid = (templateId != null) ? templateId : user.getDefaultTemplateId();
+            resume.setTemplateId(tid);
+            
+            // Build initial content JSON with professional markers
+            String initialContent = String.format(
+                "{\"fullName\":\"%s\",\"location\":\"%s\",\"phone\":\"%s\",\"email\":\"%s\",\"socialLinks\":[%s,%s,%s]}",
+                user.getFullName() != null ? user.getFullName() : "",
+                user.getLocation() != null ? user.getLocation() : "",
+                user.getPhone() != null ? user.getPhone() : "",
+                user.getUsername(),
+                user.getLinkedin() != null && !user.getLinkedin().isEmpty() ? "{\"platform\":\"LinkedIn\",\"url\":\"" + user.getLinkedin() + "\"}" : "null",
+                user.getGithub() != null && !user.getGithub().isEmpty() ? "{\"platform\":\"GitHub\",\"url\":\"" + user.getGithub() + "\"}" : "null",
+                user.getPortfolio() != null && !user.getPortfolio().isEmpty() ? "{\"platform\":\"Portfolio\",\"url\":\"" + user.getPortfolio() + "\"}" : "null"
+            ).replace(",null", "").replace("null,", "").replace("[null]", "[]");
+            
+            resume.setContent(initialContent);
+        } else {
+            resume.setTemplateId(templateId != null ? templateId : 1);
+            resume.setContent("{}");
+        }
+        
         model.addAttribute("resume", resume);
         return "resume-form";
     }
@@ -106,7 +132,7 @@ public class DashboardController {
         return "suggestions";
     }
 
-    @GetMapping("/delete/{id}")
+    @PostMapping("/delete/{id}")
     public String deleteResume(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         resumeService.deleteResume(id);
         redirectAttributes.addFlashAttribute("success", "Profile archived successfully.");

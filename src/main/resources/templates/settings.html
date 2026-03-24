@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Account Hub - ResumePRO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .settings-container { max-width: 800px; margin: 8rem auto 4rem; }
+        .tab-btn { background: none; border: none; color: var(--text-secondary); padding: 1rem 0; font-size: 0.95rem; font-weight: 600; cursor: pointer; position: relative; transition: all 0.2s; opacity: 0.6; }
+        .tab-btn.active { color: white; opacity: 1; }
+        .tab-btn.active::after { content: ""; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--primary); }
+        .tab-content { display: none; margin-top: 2rem; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .card-header { border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+        .template-preview { width: 100%; height: 60px; border-radius: 6px; margin-bottom: 0.5rem; border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* Danger Zone Styles */
+        .danger-zone { border: 1px solid rgba(244, 63, 94, 0.2); background: rgba(244, 63, 94, 0.02); }
+        .danger-title { color: #fb7185; }
+    </style>
+</head>
+<body class="bg-animate">
+    <div class="dot-grid-bg"></div>
+    <div class="glow-mesh" style="top: -10%; right: -10%; width: 40%; height: 40%;"></div>
+
+    <nav class="navbar glass">
+        <div class="nav-content">
+            <a href="/dashboard" class="logo">RESUME<span>PRO</span></a>
+            <div style="display: flex; align-items: center; gap: 2rem;">
+                <a href="/dashboard" class="btn btn-secondary" style="font-size: 0.85rem;">Back to Workspace</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="settings-container">
+            <h1 class="section-title" style="margin-bottom: 0.5rem;">Account Hub</h1>
+            <p style="color: var(--text-secondary); margin-bottom: 3rem;">Configure your global profile, professional markers, and account security.</p>
+
+            <!-- Success/Error Badges -->
+            <div th:if="${success}" class="animate-fade-up" style="margin-bottom: 2rem;">
+                <div class="badge badge-success" style="padding: 1rem; display: flex; align-items: center; gap: 0.75rem; border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span th:text="${success}">Success</span>
+                </div>
+            </div>
+
+            <div th:if="${error}" class="animate-fade-up" style="margin-bottom: 2rem;">
+                <div class="badge" style="padding: 1rem; display: flex; align-items: center; gap: 0.75rem; border: 1px solid rgba(244, 63, 94, 0.2); background: rgba(244, 63, 94, 0.1); color: #fb7185; border-radius: 12px; font-weight: 600;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span th:text="${error}">Error</span>
+                </div>
+            </div>
+
+            <div style="border-bottom: 1px solid #27272a; display: flex; gap: 2.5rem; overflow-x: auto;">
+                <button class="tab-btn active" onclick="switchTab('profile')">Profile</button>
+                <button class="tab-btn" onclick="switchTab('professional')">Professional Links</button>
+                <button class="tab-btn" onclick="switchTab('security')">Security</button>
+                <button class="tab-btn" onclick="switchTab('data')">Data & Cleanup</button>
+            </div>
+
+            <!-- Tab 1: Profile -->
+            <div id="tab-profile" class="tab-content active">
+                <form th:action="@{/dashboard/settings/profile}" method="post" class="glass-card" style="padding: 2.5rem;">
+                    <div class="card-header">
+                        <h3 style="font-family: 'Outfit';">General Identity</h3>
+                    </div>
+                    <div class="form-group">
+                        <label>Full Legal Name</label>
+                        <input type="text" name="fullName" th:value="${user.fullName}" placeholder="Praveen Lokku">
+                    </div>
+                    <div class="form-group">
+                        <label>Preferred Base Location</label>
+                        <input type="text" name="location" th:value="${user.location}" placeholder="City, Country">
+                    </div>
+                    
+                    <div class="card-header" style="margin-top: 3rem;">
+                        <h3 style="font-family: 'Outfit';">System Preferences</h3>
+                    </div>
+                    <div class="form-group">
+                        <label>Default Resume Template</label>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                            <label class="template-card glass-card" th:classappend="${user.defaultTemplateId == 1 ? 'active' : ''}">
+                                <input type="radio" name="defaultTemplateId" value="1" th:checked="${user.defaultTemplateId == 1}" style="display:none">
+                                <div class="template-preview" style="background: #0f172a; border-top: 4px solid #3b82f6;"></div>
+                                <span style="font-size: 0.75rem; font-weight: 700;">ATS Classic</span>
+                            </label>
+                            <label class="template-card glass-card" th:classappend="${user.defaultTemplateId == 2 ? 'active' : ''}">
+                                <input type="radio" name="defaultTemplateId" value="2" th:checked="${user.defaultTemplateId == 2}" style="display:none">
+                                <div class="template-preview" style="background: #4f46e5; border-top: 4px solid #fff;"></div>
+                                <span style="font-size: 0.75rem; font-weight: 700;">Modern Indigo</span>
+                            </label>
+                            <label class="template-card glass-card" th:classappend="${user.defaultTemplateId == 3 ? 'active' : ''}">
+                                <input type="radio" name="defaultTemplateId" value="3" th:checked="${user.defaultTemplateId == 3}" style="display:none">
+                                <div class="template-preview" style="background: #1e293b; border-top: 4px solid #94a3b8;"></div>
+                                <span style="font-size: 0.75rem; font-weight: 700;">Executive Serif</span>
+                            </label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 2rem;">Synchronize Identity & Preferences</button>
+                </form>
+            </div>
+
+            <!-- Tab 2: Professional Links -->
+            <div id="tab-professional" class="tab-content">
+                <form th:action="@{/dashboard/settings/professional}" method="post" class="glass-card" style="padding: 2.5rem;">
+                    <div class="card-header">
+                        <h3 style="font-family: 'Outfit';">Digital Presence</h3>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary);">These links will auto-fill when starting a new document.</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Primary Phone</label>
+                        <input type="text" name="phone" th:value="${user.phone}" placeholder="+91 98765 43210">
+                    </div>
+                    <div class="form-group">
+                        <label>LinkedIn Profile URL</label>
+                        <input type="text" name="linkedin" th:value="${user.linkedin}" placeholder="linkedin.com/in/username">
+                    </div>
+                    <div class="form-group">
+                        <label>GitHub Handle / Profile</label>
+                        <input type="text" name="github" th:value="${user.github}" placeholder="github.com/username">
+                    </div>
+                    <div class="form-group">
+                        <label>Portfolio / Personal Site</label>
+                        <input type="text" name="portfolio" th:value="${user.portfolio}" placeholder="praveenlokku.dev">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Update Global professional Markers</button>
+                </form>
+            </div>
+
+            <!-- Tab 3: Security -->
+            <div id="tab-security" class="tab-content">
+                <form th:action="@{/dashboard/settings/security}" method="post" class="glass-card" style="padding: 2.5rem;">
+                    <div class="card-header">
+                        <h3 style="font-family: 'Outfit';">Credential Authority</h3>
+                    </div>
+                    <div class="form-group">
+                        <label>Current Secure Password</label>
+                        <input type="password" name="oldPassword" placeholder="••••••••" required>
+                    </div>
+                    <div class="form-group" style="margin-top: 2rem;">
+                        <label>New Passphrase</label>
+                        <input type="password" name="newPassword" placeholder="Minimum 8 characters" required minlength="8">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Confirm Security Rotation</button>
+                </form>
+            </div>
+
+            <!-- Tab 4: Data & Cleanup -->
+            <div id="tab-data" class="tab-content">
+                <div class="glass-card" style="padding: 2.5rem;">
+                    <div class="card-header">
+                        <h3 style="font-family: 'Outfit';">Data Sovereignty</h3>
+                    </div>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.9rem;">Download all your resume projects as a portable JSON file for backup or cross-platform use.</p>
+                    <a th:href="@{/dashboard/settings/export}" class="btn btn-outline" style="width: 100%; padding: 1rem; text-decoration: none; text-align: center; display: block;">Export My Documents (JSON)</a>
+
+                    <div class="card-header danger-zone" style="margin-top: 4rem; padding: 2rem; border-radius: 12px;">
+                        <h3 class="danger-title" style="font-family: 'Outfit';">Danger Zone</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.85rem;">Permanently delete your account and all associated resume data. This action is irreversible.</p>
+                        <form th:action="@{/dashboard/settings/delete}" method="post" onsubmit="return confirm('CRITICAL: Are you absolutely sure? This will delete ALL your resumes permanently.')">
+                            <button type="submit" class="btn-danger" style="width: 100%; background: #fb7185; color: white; border: none; padding: 1rem; border-radius: 8px; font-weight: 700; cursor: pointer;">Delete My Account Forever</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function switchTab(id) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + id).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // Handle template card clicks
+        document.querySelectorAll('.template-card').forEach(card => {
+            card.onclick = function() {
+                document.querySelectorAll('.template-card').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                this.querySelector('input').checked = true;
+            };
+        });
+    </script>
+</body>
+</html>

@@ -158,21 +158,23 @@ main {
     top: calc(var(--nav-h) + 2rem);
     height: calc(100vh - var(--nav-h) - 4rem);
     border-radius: 12px;
-    background: #f1f5f9; /* Subtle light gray background for the pane */
-    padding: 1rem;
-    display: flex;
-    justify-content: center;
+    background: #f1f5f9;
+    padding: 2rem 1rem;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .preview-canvas {
     background: white;
-    width: 100%;
-    aspect-ratio: 1 / 1.414; /* A4 Ratio */
+    width: 210mm; /* Fixed A4 Width */
+    max-width: 100%; /* Responsive fit */
+    margin: 0 auto; /* Centering in block container */
+    min-height: 297mm; /* Essential A4 height */
+    height: auto;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    transform-origin: top center;
-    padding: 1rem; /* Tightened for 1-page fit */
+    padding: 1.5rem;
     color: #0f172a;
+    position: relative;
 }
 
 /* Refined UI Elements */

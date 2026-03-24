@@ -33,42 +33,83 @@
             display: block;
         }
 
+        .preview-pane {
+            overflow-y: auto; overflow-x: hidden;
+            background: #f1f5f9; padding: 25px 15px;
+        }
         .preview-canvas {
-            background: white;
-            width: 100%;
-            height: fit-content; /* Ensure canvas grows with content */
-            min-height: 100%; /* At least A4 aspect ratio height if needed, but height: auto is better for scrolling */
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            transform-origin: top center;
-            padding: 1.25rem; /* Tightened even more for 1-page efficiency */
-            color: #0f172a;
-            transform: scale(1.0);
-            position: relative;
+            background: white !important;
+            width: 210mm; max-width: 100%; margin: 0 auto;
+            min-height: 297mm; height: auto !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            padding: 1.5rem !important; position: relative;
         }
         
         /* Specific Template Previews */
         .preview-canvas.template-1 { font-family: 'Inter', sans-serif; }
         .preview-canvas.template-3 { font-family: 'Outfit', serif; }
         
-        .preview-header { text-align: center; margin-bottom: 0.5rem; }
-        .preview-name { font-size: 1.7rem; font-weight: 800; font-family: 'Outfit'; color: #0f172a; margin-bottom: 0.1rem; }
-        .preview-contacts { font-size: 0.7rem; color: #64748b; }
+        .preview-header { text-align: center; margin-bottom: 0.35rem; }
+        .preview-name { font-size: 1.6rem; font-weight: 800; font-family: 'Outfit'; color: #0f172a; margin-bottom: 0.05rem; }
+        .preview-contacts { font-size: 0.68rem; color: #64748b; line-height: 1.2; }
         
         .preview-section-title { 
-            font-size: 0.75rem; font-weight: 800; color: #0f172a; border-bottom: 1.5px solid #e2e8f0;
-            padding-bottom: 0.15rem; margin: 0.4rem 0 0.25rem; text-transform: uppercase; letter-spacing: 0.05em;
+            font-size: 0.75rem; font-weight: 800; border-bottom: 2.5px solid #0f172a;
+            padding-bottom: 3.5px; margin: 0.6rem 0 0.35rem; text-transform: uppercase; letter-spacing: 0.1em;
         }
+
+        /* Unified 1-Page Canvas Fix */
+        .preview-canvas {
+            display: flex !important;
+            flex-direction: column !important;
+            background: white !important;
+            width: 210mm !important;
+            max-width: 100%;
+            margin: 0 auto;
+            min-height: 297mm !important;
+            height: auto !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            padding: 1.75rem !important;
+            color: #1e293b;
+            position: relative;
+            overflow: visible !important;
+        }
+
+        /* Template 1: Zinc/Slate (Classic) */
+        .template-1 { font-family: 'Inter', sans-serif; }
+        .template-1 .preview-name { color: #0f172a; }
+        .template-1 .preview-section-title { color: #0f172a; border-color: #0f172a; }
+
+        /* Template 2: Modern Indigo */
+        .template-2 { font-family: 'Inter', sans-serif; }
+        .template-2 .preview-name { color: #4f46e5; }
+        .template-2 .preview-section-title { color: #4f46e5; border-color: #4f46e5; }
+
+        /* Template 3: Executive Serif */
+        .template-3 { font-family: 'Outfit', serif; }
+        .template-3 .preview-name { font-family: 'Outfit'; color: #1e293b; border-bottom: 3px double #1e293b; display: inline-block; }
+        .template-3 .preview-section-title { color: #334155; border-bottom: 1.5px solid #334155; }
         
-        .preview-item { margin-bottom: 0.2rem; }
-        .preview-item-header { display: flex; justify-content: space-between; font-weight: 700; font-size: 0.85rem; color: #334155; }
-        .preview-item-sub { font-size: 0.7rem; color: #64748b; font-weight: 500; }
-        .preview-item-desc { font-size: 0.72rem; line-height: 1.25; color: #475569; margin-top: 0.1rem; white-space: pre-line; }
+        .preview-section { margin-bottom: 0; padding-bottom: 0; }
+        .preview-item { margin-bottom: 0.02rem; }
+        .preview-item-header { display: flex; justify-content: space-between; font-weight: 700; font-size: 0.8rem; color: #334155; }
+        .preview-item-sub { font-size: 0.68rem; color: #64748b; font-weight: 500; }
+        .preview-item-desc { font-size: 0.68rem; line-height: 1.15; color: #475569; margin-top: 0.05rem; white-space: pre-line; }
 
         .bullet-item {
             display: grid;
-            grid-template-columns: 12px 1fr;
-            gap: 4px;
-            margin-top: 2px;
+            grid-template-columns: 8px 1fr;
+            gap: 2px;
+            margin-top: 1px;
+        }
+
+        /* Compact Editor Items (Skills/Certs) */
+        .compact-form-item {
+            border: none !important;
+            background: transparent !important;
+            padding: 0px !important;
+            margin-bottom: 0px !important;
+            box-shadow: none !important;
         }
     </style>
 </head>
@@ -233,16 +274,21 @@
                     <!-- Step 8: Template -->
                     <div id="step-8" class="form-section">
                         <h3 style="margin-bottom: 2rem; font-family: 'Outfit';">Review & Theme</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
                             <label class="template-card glass-card" th:classappend="${resume.templateId == 1 || resume.templateId == 0 ? 'active' : ''}" onclick="selectTemplate(1, this)">
                                 <input type="radio" name="templateId" value="1" th:checked="${resume.templateId == 1 || resume.templateId == 0}" style="display:none">
-                                <div style="height: 100px; background: white; border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border-light); border-top: 5px solid #0f172a;"></div>
-                                <span style="font-weight: 700; font-size: 0.8rem;">ATS CLASSIC</span>
+                                <div style="height: 60px; background: white; border-radius: 6px; margin-bottom: 0.5rem; border: 1px solid var(--border-light); border-top: 5px solid #0f172a;"></div>
+                                <span style="font-weight: 700; font-size: 0.7rem;">ATS CLASSIC</span>
+                            </label>
+                            <label class="template-card glass-card" th:classappend="${resume.templateId == 2 ? 'active' : ''}" onclick="selectTemplate(2, this)">
+                                <input type="radio" name="templateId" value="2" th:checked="${resume.templateId == 2}" style="display:none">
+                                <div style="height: 60px; background: white; border-radius: 6px; margin-bottom: 0.5rem; border: 1px solid var(--border-light); border-top: 5px solid #4f46e5;"></div>
+                                <span style="font-weight: 700; font-size: 0.7rem;">MODERN INDIGO</span>
                             </label>
                             <label class="template-card glass-card" th:classappend="${resume.templateId == 3 ? 'active' : ''}" onclick="selectTemplate(3, this)">
                                 <input type="radio" name="templateId" value="3" th:checked="${resume.templateId == 3}" style="display:none">
-                                <div style="height: 100px; background: white; border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border-light); border-top: 5px solid #475569;"></div>
-                                <span style="font-weight: 700; font-size: 0.8rem;">EXECUTIVE SERIF</span>
+                                <div style="height: 60px; background: white; border-radius: 6px; margin-bottom: 0.5rem; border: 1px solid var(--border-light); border-top: 5px solid #1e293b;"></div>
+                                <span style="font-weight: 700; font-size: 0.7rem;">EXECUTIVE SERIF</span>
                             </label>
                         </div>
                     </div>
@@ -268,6 +314,8 @@
             el.classList.add('active');
         }
 
+        let currentTemplate = existingData.templateId || 1;
+        
         function syncTitle() {
             const val = document.getElementById('profileTitle').value;
             document.getElementById('editorTitleDisplay').innerText = val || 'New Professional Profile';
@@ -326,6 +374,7 @@
             document.querySelectorAll('.template-card').forEach(card => card.classList.remove('active'));
             el.classList.add('active');
             el.querySelector('input').checked = true;
+            currentTemplate = id;
             updatePreview();
         }
 
@@ -333,11 +382,10 @@
             console.log("Adding Skill Group:", data);
             const list = document.getElementById('skillGroupList');
             const item = document.createElement('div');
-            item.className = 'dynamic-item';
-            item.style.marginBottom = '1.5rem';
+            item.className = 'dynamic-item compact-form-item';
             item.innerHTML = `
                 <span class="remove-btn" onclick="this.parentElement.remove(); updatePreview()">Remove</span>
-                <div style="display:grid; grid-template-columns: 200px 1fr; gap:1.5rem;">
+                <div style="display:grid; grid-template-columns: 160px 1fr; gap:1rem;">
                     <input type="text" class="skill-category" placeholder="e.g., Programming" value="${data.category || ''}" oninput="updatePreview()">
                     <input type="text" class="skill-values" placeholder="e.g., C++, Java, Python" value="${data.values || ''}" oninput="updatePreview()">
                 </div>
@@ -349,11 +397,10 @@
         function addCertification(data = {}) {
             const list = document.getElementById('certList');
             const item = document.createElement('div');
-            item.className = 'dynamic-item';
-            item.style.marginBottom = '1rem';
+            item.className = 'dynamic-item compact-form-item';
             item.innerHTML = `
                 <span class="remove-btn" onclick="this.parentElement.remove(); updatePreview()">Remove</span>
-                <div style="display:grid; grid-template-columns: 160px 1fr; gap:1.5rem;">
+                <div style="display:grid; grid-template-columns: 140px 1fr; gap:0.5rem; margin-top:0.25rem;">
                     <input type="text" class="cert-cat" placeholder="e.g., Cloud" value="${data.category || ''}" oninput="updatePreview()">
                     <input type="text" class="cert-name" placeholder="Certification Name" value="${data.name || ''}" oninput="updatePreview()">
                 </div>
@@ -504,8 +551,8 @@
                     const nam = item.querySelector('.cert-name').value;
                     if(nam) {
                         certs += `
-                            <div class="preview-item-desc" style="margin-top:2px">
-                                ${cat ? `<strong>${cat}:</strong> ` : ''}${nam}
+                            <div class="preview-item-desc" style="margin-top:1px">
+                                <strong>${cat ? cat + ': ' : ''}</strong>${nam}
                             </div>`;
                     }
                 });
@@ -515,13 +562,15 @@
                     const ttl = item.querySelector('.ach-title').value;
                     const dte = item.querySelector('.ach-date').value;
                     const dsc = item.querySelector('.ach-desc').value;
-                    if(ttl) ach += `
-                        <div class="preview-item">
-                            <div class="preview-item-header"><span>${ttl}</span><span>${dte}</span></div>
-                            <div class="preview-item-desc">${formatBullets(dsc)}</div>
-                        </div>`;
+                    if(ttl || dsc) {
+                        ach += `
+                            <div class="preview-item-desc" style="margin-top:1px">
+                                <strong>${ttl}${dte ? ' (' + dte + ')' : ''}: </strong>${dsc}
+                            </div>`;
+                    }
                 });
 
+                previewArea.className = `preview-canvas template-${currentTemplate}`;
                 previewArea.innerHTML = `
                     <div class="preview-header">
                         <div class="preview-name">${name}</div>
