@@ -5,12 +5,14 @@ import com.resumebuilder.model.User;
 import com.resumebuilder.service.AISuggestionService;
 import com.resumebuilder.service.PDFGenerationService;
 import com.resumebuilder.service.ResumeService;
+import com.resumebuilder.service.SambaNovaService;
 import com.resumebuilder.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletResponse;
@@ -148,6 +150,75 @@ public class DashboardController {
 
     @Autowired
     private AISuggestionService aiSuggestionService;
+
+    @Autowired
+    private SambaNovaService sambaNovaService;
+
+    @PostMapping("/api/ai/ats-check")
+    @ResponseBody
+    public java.util.Map<String, Object> atsCheck(
+            @RequestParam(value="content", required = false) String content,
+            @RequestParam(value="file", required = false) MultipartFile file) {
+        
+        System.out.println("ATS Check Request received. File present: " + (file != null && !file.isEmpty()));
+        String textToAnalyze = content;
+        
+        try {
+            if (file != null && !file.isEmpty()) {
+                textToAnalyze = sambaNovaService.extractTextFromPdf(file);
+                System.out.println("Extracted text sample: " + (textToAnalyze.length() > 50 ? textToAnalyze.substring(0, 50) : textToAnalyze));
+            }
+            
+            if (textToAnalyze == null || textToAnalyze.trim().isEmpty()) {
+                java.util.Map<String, Object> err = new java.util.HashMap<>();
+                err.put("error", "No content provided. Please upload a PDF or paste resume text.");
+                return err;
+            }
+            
+            return sambaNovaService.getATSAnalysis(textToAnalyze);
+        } catch (Exception e) {
+            e.printStackTrace();
+            java.util.Map<String, Object> err = new java.util.HashMap<>();
+            err.put("error", "System Error: " + e.getMessage());
+            return err;
+        }
+    }
+
+    @PostMapping("/api/ai/job-match")
+    @ResponseBody
+    public java.util.Map<String, Object> jobMatch(
+            @RequestParam(value="resumeContent", required = false) String resumeContent,
+            @RequestParam(value="jobDescription", required = false) String jobDescription,
+            @RequestParam(value="file", required = false) MultipartFile file) {
+        
+        System.out.println("Job Match Request received. File present: " + (file != null && !file.isEmpty()));
+        String textToAnalyze = resumeContent;
+        
+        try {
+            if (file != null && !file.isEmpty()) {
+                textToAnalyze = sambaNovaService.extractTextFromPdf(file);
+            }
+
+            if (textToAnalyze == null || textToAnalyze.trim().isEmpty()) {
+                java.util.Map<String, Object> err = new java.util.HashMap<>();
+                err.put("error", "No resume content provided. Please upload a PDF or select a saved resume.");
+                return err;
+            }
+            
+            if (jobDescription == null || jobDescription.trim().isEmpty()) {
+                java.util.Map<String, Object> err = new java.util.HashMap<>();
+                err.put("error", "Please provide a Target Job Description.");
+                return err;
+            }
+            
+            return sambaNovaService.getJobMatchAnalysis(textToAnalyze, jobDescription);
+        } catch (Exception e) {
+            e.printStackTrace();
+            java.util.Map<String, Object> err = new java.util.HashMap<>();
+            err.put("error", "System Error: " + e.getMessage());
+            return err;
+        }
+    }
 
     @GetMapping("/download/{id}")
     public void downloadResume(@PathVariable Long id, HttpServletResponse response) throws IOException, DocumentException {

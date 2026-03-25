@@ -440,3 +440,65 @@ input:focus, textarea:focus {
     background: rgba(59, 130, 246, 0.05) !important;
     box-shadow: 0 0 0 2px var(--primary-glow);
 }
+/* Better Grid Responsiveness */
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .nav-content {
+        padding: 0 1rem;
+    }
+    
+    .display-text {
+        font-size: 3rem;
+    }
+    
+    .badge {
+        font-size: 0.65rem;
+    }
+
+    .glass-card {
+        padding: 1.5rem !important;
+    }
+
+    .container {
+        padding: 0 1rem;
+    }
+    
+    .hero-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .hero-buttons .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .nav-links {
+        display: none; /* Hide for true mobile burger (omitted for simplicity but improved layout) */
+    }
+    
+    .navbar {
+        height: auto;
+        padding: 1rem 0;
+    }
+
+    .logo {
+        font-size: 1.25rem;
+    }
+}
+
+/* Tablet Optimizations */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 1.25rem;
+}

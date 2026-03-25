@@ -6,10 +6,31 @@
     <style>
         .editor-layout {
             display: grid;
-            grid-template-columns: 260px 1fr 750px; /* Maximized for clarity */
+            grid-template-columns: 260px 1fr 750px;
             gap: 2rem;
             align-items: start;
             padding: 2rem 0;
+        }
+
+        @media (max-width: 1400px) {
+            .editor-layout {
+                grid-template-columns: 200px 1fr;
+            }
+            .preview-pane {
+                display: none; /* Hide real-time preview on mid-size screens to save space */
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .editor-layout {
+                grid-template-columns: 1fr;
+            }
+            .step-indicator {
+                display: none;
+            }
+            .form-pane {
+                margin-top: 1rem;
+            }
         }
 
         .form-pane {

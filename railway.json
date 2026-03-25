@@ -1,0 +1,11 @@
+{
+  "$schema": "https://railway.app/split.schema.json",
+  "build": {
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "Dockerfile"
+  },
+  "deploy": {
+    "startCommand": "java -Dserver.port=$PORT -jar app.jar",
+    "restartPolicyType": "ON_FAILURE"
+  }
+}

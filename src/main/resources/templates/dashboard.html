@@ -149,9 +149,17 @@
                     </div>
                 </div>
 
+                <div class="form-group">
+                    <label>Select a Saved Resume</label>
+                    <select id="atsResumeSelect" onchange="fillATSFromSaved(this)">
+                        <option value="">-- Choose a Resume --</option>
+                        <option th:each="resume : ${resumes}" th:value="${resume.content}" th:text="${resume.title}"></option>
+                    </select>
+                </div>
+
                 <div class="form-group" style="margin-top: 1.5rem;">
-                    <label>Paste Resume Text (Optional)</label>
-                    <textarea id="atsInput" placeholder="Paste your resume content here..." style="min-height: 140px; font-size: 0.9rem;"></textarea>
+                    <label>Resume Text (AI Analysis Target)</label>
+                    <textarea id="atsInput" placeholder="Paste your resume content or select a saved one above..." style="min-height: 140px; font-size: 0.9rem;"></textarea>
                 </div>
                 
                 <div id="atsAnalysis" style="display: none; margin-top: 2rem; padding: 2rem; background: rgba(59, 130, 246, 0.03); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.1);">
@@ -181,8 +189,12 @@
                         <textarea id="jdInput" placeholder="Paste the JD here..." style="min-height: 160px; font-size: 0.9rem;"></textarea>
                     </div>
                     <div class="form-group">
-                        <label>Your Resume (Text - Optional)</label>
-                        <textarea id="resumeInput" placeholder="Paste your resume text here..." style="min-height: 160px; font-size: 0.9rem;"></textarea>
+                        <label>Your Resume (Select Saved)</label>
+                        <select id="matchResumeSelect" onchange="fillMatchFromSaved(this)">
+                            <option value="">-- Choose a Resume --</option>
+                            <option th:each="resume : ${resumes}" th:value="${resume.content}" th:text="${resume.title}"></option>
+                        </select>
+                        <textarea id="resumeInput" placeholder="Resume content will appear here..." style="min-height: 120px; font-size: 0.9rem; margin-top: 1rem;"></textarea>
                     </div>
                 </div>
 
@@ -254,54 +266,108 @@
                 display.style.fontWeight = '400';
             }
         }
+        function fillATSFromSaved(select) {
+            const content = select.value;
+            if (content) {
+                try {
+                    const data = JSON.parse(content);
+                    // Extract text from JSON content (simplified for analysis)
+                    document.getElementById('atsInput').value = `Name: ${data.fullName}\nEmail: ${data.email}\nExperience: ${JSON.stringify(data.experience || [])}\nSkills: ${JSON.stringify(data.skills || [])}`;
+                } catch(e) {
+                    document.getElementById('atsInput').value = content;
+                }
+            }
+        }
 
-        function runATSCheck() {
+        function fillMatchFromSaved(select) {
+            const content = select.value;
+            if (content) {
+                try {
+                    const data = JSON.parse(content);
+                    document.getElementById('resumeInput').value = `Name: ${data.fullName}\nEmail: ${data.email}\nExperience: ${JSON.stringify(data.experience || [])}\nSkills: ${JSON.stringify(data.skills || [])}`;
+                } catch(e) {
+                    document.getElementById('resumeInput').value = content;
+                }
+            }
+        }
+
+        async function runATSCheck() {
             const textInput = document.getElementById('atsInput').value;
             const fileInput = document.getElementById('resumeFile').files[0];
             
-            if(!textInput && !fileInput) return alert('Please provide a resume (paste text or attach file).');
+            if(!textInput && !fileInput) return alert('Please provide resume text or upload a PDF.');
             
             const btn = document.getElementById('atsBtn');
             btn.innerHTML = '<span class="success-pulse" style="display:inline-block; padding: 0.2rem 1rem;">Analyzing Content Structure...</span>';
             btn.disabled = true;
 
-            setTimeout(() => {
-                const score = Math.floor(Math.random() * 20) + 75; // 75-95%
+            try {
+                const formData = new FormData();
+                if(textInput) formData.append('content', textInput);
+                if(fileInput) formData.append('file', fileInput);
+
+                const response = await fetch('/dashboard/api/ai/ats-check', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.error) throw new Error(data.error);
+
+                const score = data.score || 0;
                 document.getElementById('atsAnalysis').style.display = 'block';
                 document.getElementById('atsScore').innerText = score + '%';
                 setTimeout(() => document.getElementById('atsBar').style.width = score + '%', 50);
-                document.getElementById('atsFeedback').innerText = `Your resume exhibits strong structural integrity (${score}%). We identified clear hierarchical headers and optimal density. To maximize your reach, consider strengthening individual action verbs.`;
+                document.getElementById('atsFeedback').innerText = data.analysis || "Analysis complete.";
+            } catch (err) {
+                alert('Analysis failed: ' + err.message);
+            } finally {
                 btn.innerText = 'Refresh Analysis';
                 btn.disabled = false;
-            }, 1200);
+            }
         }
 
-        function runJobMatch() {
+        async function runJobMatch() {
             const jd = document.getElementById('jdInput').value;
             const textInput = document.getElementById('resumeInput').value;
             const fileInput = document.getElementById('matchResumeFile').files[0];
             
             if(!jd) return alert('Please provide a Job Description.');
-            if(!textInput && !fileInput) return alert('Please provide your resume (paste text or attach file).');
+            if(!textInput && !fileInput) return alert('Please provide your resume (text or PDF).');
 
             const btn = document.getElementById('matchBtn');
             btn.innerHTML = '<span class="success-pulse" style="display:inline-block; padding: 0.2rem 1rem;">Cross-Referencing Skills...</span>';
             btn.disabled = true;
 
-            setTimeout(() => {
-                const score = Math.floor(Math.random() * 30) + 60; // 60-90%
+            try {
+                const formData = new FormData();
+                if(jd) formData.append('jobDescription', jd);
+                if(textInput) formData.append('resumeContent', textInput);
+                if(fileInput) formData.append('file', fileInput);
+
+                const response = await fetch('/dashboard/api/ai/job-match', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.error) throw new Error(data.error);
+
+                const score = data.score || 0;
                 document.getElementById('matchAnalysis').style.display = 'block';
                 document.getElementById('matchScore').innerText = score + '%';
                 
-                const matched = ['Technical Strategy', 'Agile Delivery', 'Risk Management', 'Infrastructure'];
-                const missing = ['Kubernetes', 'Cybersecurity', 'API Design'];
+                const matched = data.matchedKeywords || [];
+                const missing = data.missingKeywords || [];
 
                 document.getElementById('matchedKeywords').innerHTML = matched.map(k => `<span class="keyword-tag" style="color:#10b981; border-color:rgba(16,185,129,0.2);">${k}</span>`).join('');
                 document.getElementById('missingKeywords').innerHTML = missing.map(k => `<span class="keyword-tag" style="color:#fb7185; border-color:rgba(244,63,94,0.2);">${k}</span>`).join('');
-                
+            } catch (err) {
+                alert('Matching failed: ' + err.message);
+            } finally {
                 btn.innerText = 'Update Match Index';
                 btn.disabled = false;
-            }, 1500);
+            }
         }
 
         window.onload = function() {
