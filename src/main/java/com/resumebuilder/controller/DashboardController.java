@@ -105,6 +105,44 @@ public class DashboardController {
         return "redirect:/dashboard";
     }
 
+    @PostMapping("/api/save")
+    @ResponseBody
+    public java.util.Map<String, Object> autoSave(@RequestBody java.util.Map<String, Object> payload, Authentication authentication) {
+        String username = authentication.getName();
+        Optional<User> userOpt = userService.findByUsername(username);
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        
+        if (userOpt.isPresent()) {
+            try {
+                Object idObj = payload.get("id");
+                Long id = (idObj != null && !idObj.toString().trim().isEmpty()) ? Long.parseLong(idObj.toString()) : null;
+                String title = (String) payload.get("title");
+                String content = (String) payload.get("content");
+                int templateId = Integer.parseInt(payload.get("templateId").toString());
+
+                Resume resume = new Resume();
+                if (id != null) resume.setId(id);
+                resume.setTitle(title);
+                resume.setContent(content);
+                resume.setTemplateId(templateId);
+                resume.setUser(userOpt.get());
+
+                resumeService.saveResume(resume);
+                
+                response.put("status", "success");
+                response.put("lastSaved", java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")));
+            } catch (Exception e) {
+                e.printStackTrace(); // Log it!
+                response.put("status", "error");
+                response.put("message", e.getMessage());
+            }
+        } else {
+            response.put("status", "error");
+            response.put("message", "User not authenticated");
+        }
+        return response;
+    }
+
     @Autowired
     private PDFGenerationService pdfGenerationService;
 

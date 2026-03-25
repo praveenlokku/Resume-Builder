@@ -122,7 +122,10 @@
             <div style="display: flex; align-items: center; gap: 1.5rem;">
                 <a href="/dashboard" class="logo">RESUME<span>PRO</span></a>
                 <div style="height: 20px; width: 1px; background: var(--border-light);"></div>
-                <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 500;" id="editorTitleDisplay">New Professional Profile</span>
+                <div style="display: flex; flex-direction: column;">
+                    <span style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; line-height: 1;" id="editorTitleDisplay">New Professional Profile</span>
+                    <span id="saveStatus" style="font-size: 0.65rem; font-weight: 500; color: var(--text-secondary); transition: all 0.3s ease; margin-top: 4px;">Saved to Cloud</span>
+                </div>
             </div>
             <div style="display: flex; gap: 0.75rem;">
                 <a href="/dashboard" class="btn btn-secondary btn-sm">Exit Editor</a>
@@ -317,8 +320,11 @@
         let currentTemplate = existingData.templateId || 1;
         
         function syncTitle() {
-            const val = document.getElementById('profileTitle').value;
-            document.getElementById('editorTitleDisplay').innerText = val || 'New Professional Profile';
+            const input = document.getElementById('profileTitle');
+            const display = document.getElementById('editorTitleDisplay');
+            if (input && display) {
+                display.innerText = input.value || 'New Professional Profile';
+            }
         }
 
         function addExperience(data = {}) {
@@ -457,6 +463,48 @@
             }
         }
 
+        let saveTimeout;
+        function triggerAutoSave() {
+            const status = document.getElementById('saveStatus');
+            status.innerText = "Saving...";
+            status.style.color = "var(--primary)";
+            
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                const data = {
+                    id: document.querySelector('input[name="id"]').value,
+                    title: document.getElementById('profileTitle').value,
+                    templateId: currentTemplate,
+                    content: document.getElementById('resumeContent').value
+                };
+
+                fetch('/dashboard/api/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                })
+                .then(res => res.json())
+                .then(res => {
+                    if(res.status === 'success') {
+                        status.innerText = "Saved at " + res.lastSaved;
+                        status.style.color = "#10b981"; // Emerald green
+                        setTimeout(() => {
+                            status.innerText = "Saved to Cloud";
+                            status.style.color = "var(--text-secondary)";
+                        }, 3000);
+                    } else {
+                        status.innerText = "Save Failed";
+                        status.style.color = "#ef4444"; // Rose red
+                    }
+                })
+                .catch(err => {
+                    console.error("Auto-save failed:", err);
+                    status.innerText = "Cloud Sync Error";
+                    status.style.color = "#ef4444";
+                });
+            }, 2000); // 2 second delay
+        }
+
         function formatBullets(text) {
             if(!text) return '';
             return text.split('\n')
@@ -468,10 +516,15 @@
         function updatePreview() {
             try {
                 const previewArea = document.getElementById('previewArea');
+                if (!previewArea) {
+                    console.warn("Preview area not found; skipping update.");
+                    return;
+                }
+
+                // Determine template ID (selection overrides default)
                 const templateEl = document.querySelector('input[name="templateId"]:checked');
-                const templateId = templateEl ? templateEl.value : '1';
-                
-                previewArea.className = 'preview-canvas template-' + templateId;
+                const templateId = templateEl ? templateEl.value : (currentTemplate || '1');
+                currentTemplate = templateId; // Keep in sync
 
                 const name = document.getElementById('fullName').value || 'YOUR NAME';
                 const email = document.getElementById('email').value || 'contact@professional.com';
@@ -487,8 +540,8 @@
 
                 let socials = [];
                 document.querySelectorAll('#socialLinkList .dynamic-item').forEach(item => {
-                    const plt = item.querySelector('.social-platform').value;
-                    const url = item.querySelector('.social-url').value;
+                    const plt = item.querySelector('.social-platform')?.value;
+                    const url = item.querySelector('.social-url')?.value;
                     if(plt && url) {
                         const ABS_URL = ensureAbsoluteUrl(url);
                         socials.push(`<strong>${plt}:</strong> <a href="${ABS_URL}" target="_blank" style="color: inherit; text-decoration: none;">${url}</a>`);
@@ -497,13 +550,13 @@
 
                 let exp = '';
                 document.querySelectorAll('#experienceList .dynamic-item').forEach(item => {
-                    const cmp = item.querySelector('.exp-company').value;
-                    const ttl = item.querySelector('.exp-title').value;
-                    const dur = item.querySelector('.exp-duration').value;
-                    const dsc = item.querySelector('.exp-desc').value;
+                    const cmp = item.querySelector('.exp-company')?.value;
+                    const ttl = item.querySelector('.exp-title')?.value;
+                    const dur = item.querySelector('.exp-duration')?.value;
+                    const dsc = item.querySelector('.exp-desc')?.value;
                     if(cmp || ttl) exp += `
                         <div class="preview-item">
-                            <div class="preview-item-header"><span>${ttl || 'Role'}</span><span>${dur}</span></div>
+                            <div class="preview-item-header"><span>${ttl || 'Role'}</span><span>${dur || ''}</span></div>
                             <div class="preview-item-sub">${cmp || 'Company'}</div>
                             <div class="preview-item-desc">${formatBullets(dsc)}</div>
                         </div>`;
@@ -511,32 +564,32 @@
 
                 let pro = '';
                 document.querySelectorAll('#projectList .dynamic-item').forEach(item => {
-                    const ttl = item.querySelector('.proj-title').value;
-                    const dte = item.querySelector('.proj-date').value;
-                    const dsc = item.querySelector('.proj-desc').value;
+                    const ttl = item.querySelector('.proj-title')?.value;
+                    const dte = item.querySelector('.proj-date')?.value;
+                    const dsc = item.querySelector('.proj-desc')?.value;
                     if(ttl) pro += `
                         <div class="preview-item">
-                            <div class="preview-item-header"><span>${ttl}</span><span>${dte}</span></div>
+                            <div class="preview-item-header"><span>${ttl}</span><span>${dte || ''}</span></div>
                             <div class="preview-item-desc">${formatBullets(dsc)}</div>
                         </div>`;
                 });
 
                 let edu = '';
                 document.querySelectorAll('#educationList .dynamic-item').forEach(item => {
-                    const deg = item.querySelector('.edu-degree').value;
-                    const sch = item.querySelector('.edu-school').value;
-                    const yr = item.querySelector('.edu-year').value;
+                    const deg = item.querySelector('.edu-degree')?.value;
+                    const sch = item.querySelector('.edu-school')?.value;
+                    const yr = item.querySelector('.edu-year')?.value;
                     if(deg || sch) edu += `
                         <div class="preview-item">
-                            <div class="preview-item-header"><span>${deg}</span><span>${yr}</span></div>
-                            <div class="preview-item-sub">${sch}</div>
+                            <div class="preview-item-header"><span>${deg || ''}</span><span>${yr || ''}</span></div>
+                            <div class="preview-item-sub">${sch || ''}</div>
                         </div>`;
                 });
 
                 let skls = '';
                 document.querySelectorAll('#skillGroupList .dynamic-item').forEach(item => {
-                    const cat = item.querySelector('.skill-category').value;
-                    const val = item.querySelector('.skill-values').value;
+                    const cat = item.querySelector('.skill-category')?.value;
+                    const val = item.querySelector('.skill-values')?.value;
                     if(val) {
                         skls += `
                             <div class="preview-item-desc">
@@ -547,8 +600,8 @@
 
                 let certs = '';
                 document.querySelectorAll('#certList .dynamic-item').forEach(item => {
-                    const cat = item.querySelector('.cert-cat').value;
-                    const nam = item.querySelector('.cert-name').value;
+                    const cat = item.querySelector('.cert-cat')?.value;
+                    const nam = item.querySelector('.cert-name')?.value;
                     if(nam) {
                         certs += `
                             <div class="preview-item-desc" style="margin-top:1px">
@@ -559,17 +612,18 @@
 
                 let ach = '';
                 document.querySelectorAll('#achievementList .dynamic-item').forEach(item => {
-                    const ttl = item.querySelector('.ach-title').value;
-                    const dte = item.querySelector('.ach-date').value;
-                    const dsc = item.querySelector('.ach-desc').value;
+                    const ttl = item.querySelector('.ach-title')?.value;
+                    const dte = item.querySelector('.ach-date')?.value;
+                    const dsc = item.querySelector('.ach-desc')?.value;
                     if(ttl || dsc) {
                         ach += `
                             <div class="preview-item-desc" style="margin-top:1px">
-                                <strong>${ttl}${dte ? ' (' + dte + ')' : ''}: </strong>${dsc}
+                                <strong>${ttl || ''}${dte ? ' (' + dte + ')' : ''}: </strong>${dsc || ''}
                             </div>`;
                     }
                 });
 
+                // Final render
                 previewArea.className = `preview-canvas template-${currentTemplate}`;
                 previewArea.innerHTML = `
                     <div class="preview-header">
@@ -592,40 +646,43 @@
                 const data = {
                     fullName: name, email, phone, location: loc, summary: summ,
                     socialLinks: Array.from(document.querySelectorAll('#socialLinkList .dynamic-item')).map(i => ({
-                        platform: i.querySelector('.social-platform').value,
-                        url: i.querySelector('.social-url').value
+                        platform: i.querySelector('.social-platform')?.value || '',
+                        url: i.querySelector('.social-url')?.value || ''
                     })),
                     skillGroups: Array.from(document.querySelectorAll('#skillGroupList .dynamic-item')).map(i => ({
-                        category: i.querySelector('.skill-category').value,
-                        values: i.querySelector('.skill-values').value
+                        category: i.querySelector('.skill-category')?.value || '',
+                        values: i.querySelector('.skill-values')?.value || ''
                     })),
                     experience: Array.from(document.querySelectorAll('#experienceList .dynamic-item')).map(i => ({
-                        company: i.querySelector('.exp-company').value,
-                        title: i.querySelector('.exp-title').value,
-                        duration: i.querySelector('.exp-duration').value,
-                        description: i.querySelector('.exp-desc').value
+                        company: i.querySelector('.exp-company')?.value || '',
+                        title: i.querySelector('.exp-title')?.value || '',
+                        duration: i.querySelector('.exp-duration')?.value || '',
+                        description: i.querySelector('.exp-desc')?.value || ''
                     })),
                     projects: Array.from(document.querySelectorAll('#projectList .dynamic-item')).map(i => ({
-                        title: i.querySelector('.proj-title').value,
-                        date: i.querySelector('.proj-date').value,
-                        description: i.querySelector('.proj-desc').value
+                        title: i.querySelector('.proj-title')?.value || '',
+                        date: i.querySelector('.proj-date')?.value || '',
+                        description: i.querySelector('.proj-desc')?.value || ''
                     })),
                     education: Array.from(document.querySelectorAll('#educationList .dynamic-item')).map(i => ({
-                        degree: i.querySelector('.edu-degree').value,
-                        school: i.querySelector('.edu-school').value,
-                        year: i.querySelector('.edu-year').value
+                        degree: i.querySelector('.edu-degree')?.value || '',
+                        school: i.querySelector('.edu-school')?.value || '',
+                        year: i.querySelector('.edu-year')?.value || ''
                     })),
                     achievements: Array.from(document.querySelectorAll('#achievementList .dynamic-item')).map(i => ({
-                        title: i.querySelector('.ach-title').value,
-                        date: i.querySelector('.ach-date').value,
-                        description: i.querySelector('.ach-desc').value
+                        title: i.querySelector('.ach-title')?.value || '',
+                        date: i.querySelector('.ach-date')?.value || '',
+                        description: i.querySelector('.ach-desc')?.value || ''
                     })),
                     certifications: Array.from(document.querySelectorAll('#certList .dynamic-item')).map(i => ({
-                        category: i.querySelector('.cert-cat').value,
-                        name: i.querySelector('.cert-name').value
+                        category: i.querySelector('.cert-cat')?.value || '',
+                        name: i.querySelector('.cert-name')?.value || ''
                     }))
                 };
                 document.getElementById('resumeContent').value = JSON.stringify(data);
+                
+                // Trigger background save
+                triggerAutoSave();
             } catch (err) {
                 console.warn("Preview calculation halted:", err);
             }

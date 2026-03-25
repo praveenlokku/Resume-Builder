@@ -1,13 +1,13 @@
-com\resumebuilder\service\PDFGenerationService.class
 com\resumebuilder\controller\AuthController.class
-com\resumebuilder\service\AISuggestionService.class
 com\resumebuilder\service\UserService.class
+com\resumebuilder\config\PasswordConfig.class
+com\resumebuilder\service\PDFGenerationService.class
+com\resumebuilder\service\AISuggestionService.class
 com\resumebuilder\ResumeBuilderApplication.class
 com\resumebuilder\controller\DashboardController.class
 com\resumebuilder\repository\ResumeRepository.class
 com\resumebuilder\service\ResumeService.class
 com\resumebuilder\config\SecurityConfig.class
 com\resumebuilder\model\User.class
-com\resumebuilder\config\PasswordConfig.class
 com\resumebuilder\repository\UserRepository.class
 com\resumebuilder\model\Resume.class
