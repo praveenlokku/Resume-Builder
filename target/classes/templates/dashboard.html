@@ -101,36 +101,57 @@
 
         <!-- Hub Navigation -->
         <div class="animate-fade-up" style="margin: 4rem 0 2rem 0; border-bottom: 1px solid #27272a; display: flex; gap: 3rem;">
-            <button class="tab-btn active" onclick="switchTab('resumes')">Resumes</button>
+            <button class="tab-btn active" onclick="switchTab('resumes')">Documents Library</button>
             <button class="tab-btn" onclick="switchTab('ats')">ATS Analyzer</button>
             <button class="tab-btn" onclick="switchTab('match')">Match Job</button>
         </div>
 
-        <!-- Resumes Section -->
+        <!-- Documents Library Section -->
         <div id="tab-resumes" class="tab-content active">
             <div class="dashboard-grid animate-fade-up">
-                <a th:href="@{/dashboard/new}" class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; border: 1px dashed #3f3f46; background: rgba(24, 24, 27, 0.4); min-height: 280px;">
+                <a th:href="@{/dashboard/new}" class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; border: 1px dashed #3f3f46; background: rgba(24, 24, 27, 0.4); min-height: 280px; transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1);">
                     <div style="width: 48px; height: 48px; background: rgba(59, 130, 246, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); margin-bottom: 1rem;">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     </div>
                     <span style="font-family: 'Outfit'; font-weight: 700; color: white;">New Document</span>
                 </a>
 
-                <div th:each="resume : ${resumes}" class="glass-card animate-fade-up" style="padding: 2rem; display: flex; flex-direction: column; justify-content: space-between; min-height: 280px;">
+                <div th:each="resume : ${resumes}" class="glass-card animate-fade-up" style="padding: 2.25rem; display: flex; flex-direction: column; justify-content: space-between; min-height: 300px; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.03);">
+                    <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--primary); opacity: 0.1;"></div>
+                    
                     <div>
-                        <div style="font-family: 'Outfit'; font-weight: 800; font-size: 1.35rem; margin-bottom: 0.5rem;" th:text="${resume.title}">Resume</div>
-                        <div style="color: var(--text-secondary); font-size: 0.8rem;" th:text="'Updated ' + ${#temporals.format(resume.updatedAt, 'MMM dd')}">Date</div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                            <div style="font-family: 'Outfit'; font-weight: 800; font-size: 1.4rem; color: #fff; line-height: 1.2;" th:text="${resume.title}">Resume</div>
+                            <div style="font-size: 0.65rem; color: var(--text-secondary); font-weight: 800; padding: 0.35rem 0.65rem; background: rgba(255,255,255,0.03); border-radius: 6px; letter-spacing: 0.05em;" th:text="'ID: ' + ${resume.id}">ID</div>
+                        </div>
+                        <div style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 500;" th:text="'Last synchronized ' + ${#temporals.format(resume.updatedAt, 'MMM dd, HH:mm')}">Date</div>
                     </div>
-                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                        <a th:href="@{/dashboard/edit/{id}(id=${resume.id})}" class="btn btn-primary" style="flex: 1; text-align: center; padding: 0.6rem; font-size: 0.85rem;">Edit</a>
-                        <form th:action="@{/dashboard/delete/{id}(id=${resume.id})}" method="post" style="display: inline;">
-                            <button type="submit" class="btn btn-secondary" style="padding: 0.6rem 1rem; font-size: 0.85rem;">Archive</button>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 2rem;">
+                        <div style="display: flex; gap: 0.75rem;">
+                            <a th:href="@{/dashboard/edit/{id}(id=${resume.id})}" class="btn btn-primary" style="flex: 2; text-align: center; padding: 0.75rem; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                Edit
+                            </a>
+                            <a th:href="@{/dashboard/download/{id}(id=${resume.id})}" class="btn btn-outline" style="flex: 1; text-align: center; padding: 0.75rem; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; border-color: rgba(255,255,255,0.08); background: rgba(255,255,255,0.02);">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            </a>
+                        </div>
+                        <form th:action="@{/dashboard/delete/{id}(id=${resume.id})}" method="post" style="width: 100%;" onsubmit="return confirm('Archive this profile? This cannot be undone.');">
+                            <button type="submit" class="btn btn-secondary" style="width: 100%; padding: 0.75rem; font-size: 0.85rem; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                                Archive Profile
+                            </button>
                         </form>
                     </div>
                 </div>
             </div>
-            <div th:if="${#lists.isEmpty(resumes)}" style="text-align: center; padding: 4rem; color: var(--text-secondary);">
-                <p>Welcome to your workspace. Start by creating a premium resume.</p>
+            <div th:if="${#lists.isEmpty(resumes)}" style="text-align: center; padding: 6rem; color: var(--text-secondary);">
+                <div style="margin-bottom: 1.5rem; opacity: 0.2;">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <p style="font-size: 1.1rem; font-family: 'Outfit'; font-weight: 500;">No documents found</p>
+                <p style="font-size: 0.85rem; margin-top: 0.5rem; opacity: 0.6;">Start your journey by creating a high-fidelity resume.</p>
             </div>
         </div>
 
