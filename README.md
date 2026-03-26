@@ -8,6 +8,11 @@
 
 ---
 
+## 🌐 Live Demo
+🚀 **Check out the live application here**: [resume-builderr.up.railway.app](https://resume-builderr.up.railway.app)
+
+---
+
 ## 🌟 Key Features
 
 - **💎 Ultra-Premium UI/UX**: A stunning "Zinc & Slate" design system with atmospheric gradients and Bento-style feature grids.

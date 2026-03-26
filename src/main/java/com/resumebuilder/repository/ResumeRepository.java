@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface ResumeRepository extends JpaRepository<Resume, Long> {
     List<Resume> findByUser(User user);
+    List<Resume> findByUserAndArchived(User user, boolean archived);
 }

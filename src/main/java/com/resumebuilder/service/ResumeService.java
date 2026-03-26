@@ -18,7 +18,11 @@ public class ResumeService {
     private ResumeRepository resumeRepository;
 
     public List<Resume> getResumesByUser(User user) {
-        return resumeRepository.findByUser(user);
+        return resumeRepository.findByUserAndArchived(user, false);
+    }
+
+    public List<Resume> getArchivedResumesByUser(User user) {
+        return resumeRepository.findByUserAndArchived(user, true);
     }
 
     public Resume saveResume(Resume resume) {
@@ -31,5 +35,19 @@ public class ResumeService {
 
     public void deleteResume(Long id) {
         resumeRepository.deleteById(id);
+    }
+
+    public void archiveResume(Long id) {
+        resumeRepository.findById(id).ifPresent(resume -> {
+            resume.setArchived(true);
+            resumeRepository.save(resume);
+        });
+    }
+
+    public void unarchiveResume(Long id) {
+        resumeRepository.findById(id).ifPresent(resume -> {
+            resume.setArchived(false);
+            resumeRepository.save(resume);
+        });
     }
 }

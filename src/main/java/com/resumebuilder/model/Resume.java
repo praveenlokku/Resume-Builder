@@ -20,6 +20,8 @@ public class Resume {
     private String content; // JSON string of resume data
 
     private int templateId;
+    
+    private boolean archived = false;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -46,6 +48,8 @@ public class Resume {
     public void setContent(String content) { this.content = content; }
     public int getTemplateId() { return templateId; }
     public void setTemplateId(int templateId) { this.templateId = templateId; }
+    public boolean isArchived() { return archived; }
+    public void setArchived(boolean archived) { this.archived = archived; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

@@ -43,6 +43,18 @@ public class DashboardController {
         return "dashboard";
     }
 
+    @GetMapping("/archive")
+    public String archiveHistory(Model model, Authentication authentication) {
+        String username = authentication.getName();
+        Optional<User> userOpt = userService.findByUsername(username);
+        if (userOpt.isPresent()) {
+            List<Resume> archivedResumes = resumeService.getArchivedResumesByUser(userOpt.get());
+            archivedResumes.sort((a, b) -> b.getUpdatedAt().compareTo(a.getUpdatedAt()));
+            model.addAttribute("archivedResumes", archivedResumes);
+        }
+        return "archive";
+    }
+
     @GetMapping("/new")
     public String selectTemplate() {
         return "template-select";
@@ -241,10 +253,24 @@ public class DashboardController {
         return "suggestions";
     }
 
+    @PostMapping("/archive/{id}")
+    public String archiveResume(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        resumeService.archiveResume(id);
+        redirectAttributes.addFlashAttribute("success", "Profile archived successfully. You can find it in the Archive History.");
+        return "redirect:/dashboard";
+    }
+
+    @PostMapping("/unarchive/{id}")
+    public String unarchiveResume(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        resumeService.unarchiveResume(id);
+        redirectAttributes.addFlashAttribute("success", "Profile restored successfully.");
+        return "redirect:/dashboard/archive";
+    }
+
     @PostMapping("/delete/{id}")
     public String deleteResume(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        resumeService.deleteResume(id);
-        redirectAttributes.addFlashAttribute("success", "Profile archived successfully.");
-        return "redirect:/dashboard";
+        resumeRepository.deleteById(id);
+        redirectAttributes.addFlashAttribute("success", "Profile permanently deleted.");
+        return "redirect:/dashboard/archive";
     }
 }
