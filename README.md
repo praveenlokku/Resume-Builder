@@ -2,10 +2,9 @@
 
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-2.7.18-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![Java](https://img.shields.io/badge/Java-8-ED8B00?style=for-the-badge&logo=java&logoColor=white)](https://www.oracle.com/java/)
-[![SambaNova AI](https://img.shields.io/badge/AI--Powered-SambaNova-orange?style=for-the-badge)](https://sambanova.ai/)
 [![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 
-**Resume-Builder** is an ultra-premium, high-fidelity career platform designed to help job seekers create recruiter-ready, ATS-friendly resumes in minutes. Powered by the **SambaNova AI API** (Meta-Llama-3.1-8B-Instruct), it provides real-time ATS scoring, intelligent job matching, and seamless PDF generation.
+**Resume-Builder** is an ultra-premium, high-fidelity career platform designed to help job seekers create recruiter-ready, ATS-friendly resumes in minutes. Powered by the (Meta-Llama-3.1-8B-Instruct), it provides real-time ATS scoring, intelligent job matching, and seamless PDF generation.
 
 ---
 
@@ -36,7 +35,6 @@
 - **Features**: Interactive Bento Grids, Glassmorphism, Responsive Layouts
 
 ### AI Implementation
-- **Provider**: SambaNova AI
 - **Model**: Meta-Llama-3.1-8B-Instruct
 - **Capabilities**: PDF Text Extraction, Semantic Analysis, Keyword Matching
 
