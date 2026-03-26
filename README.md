@@ -109,4 +109,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-<p align="center">Made with ❤️ for Job Seekers by Praveen</p>
+<p align="center">Made for Job Seekers by Praveen</p>
