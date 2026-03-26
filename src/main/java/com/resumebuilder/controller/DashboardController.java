@@ -269,7 +269,7 @@ public class DashboardController {
 
     @PostMapping("/delete/{id}")
     public String deleteResume(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        resumeRepository.deleteById(id);
+        resumeService.deleteResume(id);
         redirectAttributes.addFlashAttribute("success", "Profile permanently deleted.");
         return "redirect:/dashboard/archive";
     }
