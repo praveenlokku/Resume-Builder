@@ -391,7 +391,10 @@
                     <input type="text" class="edu-degree" placeholder="Degree / Certification" value="${data.degree || ''}" oninput="updatePreview()">
                     <input type="text" class="edu-school" placeholder="Institution" value="${data.school || ''}" oninput="updatePreview()">
                 </div>
-                <input type="text" class="edu-year" placeholder="Graduation Year" value="${data.year || ''}" oninput="updatePreview()">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+                    <input type="text" class="edu-year" placeholder="Graduation Year" value="${data.year || ''}" oninput="updatePreview()">
+                    <input type="text" class="edu-score" placeholder="Score / CGPA (e.g., 9.5 CGPA)" value="${data.score || ''}" oninput="updatePreview()">
+                </div>
             `;
             list.appendChild(item);
             updatePreview();
@@ -603,10 +606,11 @@
                     const deg = item.querySelector('.edu-degree')?.value;
                     const sch = item.querySelector('.edu-school')?.value;
                     const yr = item.querySelector('.edu-year')?.value;
+                    const scr = item.querySelector('.edu-score')?.value;
                     if(deg || sch) edu += `
                         <div class="preview-item">
                             <div class="preview-item-header"><span>${deg || ''}</span><span>${yr || ''}</span></div>
-                            <div class="preview-item-sub">${sch || ''}</div>
+                            <div class="preview-item-sub">${sch || ''}${scr ? ' • ' + scr : ''}</div>
                         </div>`;
                 });
 
@@ -691,7 +695,8 @@
                     education: Array.from(document.querySelectorAll('#educationList .dynamic-item')).map(i => ({
                         degree: i.querySelector('.edu-degree')?.value || '',
                         school: i.querySelector('.edu-school')?.value || '',
-                        year: i.querySelector('.edu-year')?.value || ''
+                        year: i.querySelector('.edu-year')?.value || '',
+                        score: i.querySelector('.edu-score')?.value || ''
                     })),
                     achievements: Array.from(document.querySelectorAll('#achievementList .dynamic-item')).map(i => ({
                         title: i.querySelector('.ach-title')?.value || '',

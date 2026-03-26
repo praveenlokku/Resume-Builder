@@ -175,10 +175,16 @@ public class PDFGenerationService {
                 table.setWidthPercentage(100);
                 table.addCell(createCell(edu.getOrDefault("school", ""), boldFont, Element.ALIGN_LEFT));
                 table.addCell(createCell(edu.getOrDefault("year", ""), normalFont, Element.ALIGN_RIGHT));
-                table.setSpacingBefore(0); // Set to 0 to hug the section line
-                table.setSpacingAfter(2); // Reduced from 5 for tighter flow
+                table.setSpacingBefore(0);
+                table.setSpacingAfter(2);
                 document.add(table);
-                document.add(new Paragraph(edu.getOrDefault("degree", ""), normalFont));
+                
+                String degree = edu.getOrDefault("degree", "");
+                String score = edu.getOrDefault("score", "");
+                if (!score.isEmpty()) {
+                    degree += " (" + score + ")";
+                }
+                document.add(new Paragraph(degree, normalFont));
             }
         }
     }
