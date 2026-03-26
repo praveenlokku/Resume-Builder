@@ -141,9 +141,10 @@ public class DashboardController {
                 resume.setTemplateId(templateId);
                 resume.setUser(userOpt.get());
 
-                resumeService.saveResume(resume);
+                Resume savedResume = resumeService.saveResume(resume);
                 
                 response.put("status", "success");
+                response.put("id", savedResume.getId());
                 response.put("lastSaved", java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")));
             } catch (Exception e) {
                 e.printStackTrace(); // Log it!

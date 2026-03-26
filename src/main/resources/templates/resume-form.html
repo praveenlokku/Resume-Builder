@@ -507,6 +507,9 @@
                 .then(res => res.json())
                 .then(res => {
                     if(res.status === 'success') {
+                        if (res.id) {
+                            document.querySelector('input[name="id"]').value = res.id;
+                        }
                         status.innerText = "Saved at " + res.lastSaved;
                         status.style.color = "#10b981"; // Emerald green
                         setTimeout(() => {
